@@ -18,6 +18,10 @@ pipeline {
 
         // Docker 관련
         DOCKER_REGISTRY = 'jangker'
+        DOCKER_CREDENTIALS = 'dockerhub-credential'
+
+        //Jenkins 
+        GITHUB_CREDENTIALS = 'github-credentials'
     }
 
     triggers {
@@ -28,7 +32,7 @@ pipeline {
         stage('Pull from GitHub') {
             steps {
                 echo "📥 Pulling latest code from GitHub..."
-                git credentialsId: 'github-credentials', url: 'https://github.com/jsjsjs1492/deploy_test.git', branch: 'develop'
+                git credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/jsjsjs1492/deploy_test.git', branch: 'main'
             
             }
         }
@@ -38,7 +42,7 @@ pipeline {
                 echo "🛠️ Building backend Docker image..."
                 dir('dev-community/dev-community-backend') {
                     script {
-                        docker.withRegistry('', 'dockerhub-credential') {
+                        docker.withRegistry('', "${DOCKER_CREDENTIALS}") {
                             def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest","-f Dockerfile .")
                             backendImage.push('latest')
                         }
@@ -73,7 +77,7 @@ pipeline {
                     """
 
                     script {
-                        docker.withRegistry('', 'dockerhub-credential') {
+                        docker.withRegistry('', "${DOCKER_CREDENTIALS}") {
                             def frontendImage = docker.build("${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest",
                                 "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile .")
                             frontendImage.push('latest')
