@@ -4,24 +4,23 @@ pipeline {
     environment {
         // 백엔드 관련 환경 변수
         BACKEND_IMAGE = 'dev-community-backend'
-        BACKEND_SERVER = "ubuntu@52.78.59.185"  // 백엔드 서버 주소
-        BACKEND_PORT = "8081"  // 젠킨스와 충돌 방지를 위해 8081 포트 사용
-        BACKEND_URL = "http://52.78.59.185"  // 백엔드 URL
+        BACKEND_SERVER = "ubuntu@52.78.59.185"
+        BACKEND_PORT = "8081"
+        BACKEND_URL = "http://52.78.59.185"
         BACKEND_API_URL = "${BACKEND_URL}:${BACKEND_PORT}"
-        
+
         // 프론트엔드 관련 환경 변수
         FRONTEND_IMAGE = 'dev-community-frontend'
-        FRONTEND_SERVER = "ubuntu@13.124.40.201"  // 프론트엔드 서버 주소
-        FRONTEND_URL = "http://13.124.40.201"  // 프론트엔드 URL
-        FRONTEND_TEST_PORT = '3000'  // 테스트용 포트
-        FRONTEND_PROD_PORT = '80'    // 프로덕션용 포트
-        
-        // Docker 관련 환경 변수
-        DOCKER_REGISTRY = 'jangker'  // Docker Hub 사용자명
+        FRONTEND_SERVER = "ubuntu@13.124.40.201"
+        FRONTEND_URL = "http://13.124.40.201"
+        FRONTEND_TEST_PORT = '3000'
+        FRONTEND_PROD_PORT = '80'
+
+        // Docker 관련
+        DOCKER_REGISTRY = 'jangker'
     }
 
     triggers {
-        // GitHub Webhook으로 푸시 감지
         githubPush()
     }
 
@@ -33,18 +32,14 @@ pipeline {
             }
         }
 
-        // 백엔드 Docker 이미지 빌드 및 푸시
         stage('Build & Push Backend Docker Image') {
             steps {
                 echo "🛠️ Building backend Docker image..."
-                dir('dev-community/dev-community-backend') {  // 이 경로가 맞는지 확인 필요
+                dir('dev-community/dev-community-backend') {
                     script {
-                        // Dockerfile 존재 여부 확인
-                        sh 'ls -la'  // 현재 디렉토리 파일 목록 확인
-                        
                         docker.withRegistry('', 'dockerhub-credential') {
-                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${env.BUILD_NUMBER}", 
-                                "-f ${WORKSPACE}/dev-community/dev-community-backend/Dockerfile_backend .")
+                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest",
+                                "-f Dockerfile_backend .")
                             backendImage.push('latest')
                         }
                     }
@@ -52,28 +47,22 @@ pipeline {
             }
         }
 
-        // 프론트엔드 Docker 이미지 빌드 및 푸시
         stage('Build & Push Frontend Docker Image') {
             steps {
                 echo "🛠️ Building frontend Docker image..."
                 dir('dev-community/dev-community-frontend') {
-                    // Nginx 설정 디렉토리 생성 (없을 경우)
                     sh 'mkdir -p nginx'
-                    
-                    // Nginx 설정 파일 생성 - API 프록시 추가
+
                     sh """
                     echo 'server {
                         listen 80;
-                        
                         location / {
                             root /usr/share/nginx/html;
                             index index.html index.htm;
                             try_files \$uri \$uri/ /index.html;
                         }
-                        
-                        # API 요청을 백엔드로 프록시
                         location /api {
-                            proxy_pass ${BACKEND_API_URL};
+                            proxy_pass http://backend:${BACKEND_PORT};
                             proxy_http_version 1.1;
                             proxy_set_header Upgrade \$http_upgrade;
                             proxy_set_header Connection "upgrade";
@@ -82,12 +71,11 @@ pipeline {
                         }
                     }' > nginx/default.conf
                     """
-                    
+
                     script {
                         docker.withRegistry('', 'dockerhub-credential') {
-                            // 백엔드 API URL을 빌드 인자로 전달
-                            def frontendImage = docker.build("${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${env.BUILD_NUMBER}", 
-                                "--build-arg REACT_APP_API_URL=${BACKEND_API_URL} -f Dockerfile_frontend .")
+                            def frontendImage = docker.build("${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest",
+                                "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile_frontend .")
                             frontendImage.push('latest')
                         }
                     }
@@ -95,83 +83,67 @@ pipeline {
             }
         }
 
-        // Docker Compose 파일 생성 및 배포 (백엔드)
         stage('Deploy Backend with Docker Compose') {
             steps {
-                echo "🚀 Deploying backend with Docker Compose..."
-                
-                // Copy existing docker-compose.yml and deploy
+                echo "🚀 Deploying backend..."
                 sh """
                 scp -o StrictHostKeyChecking=no docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
                 ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
                     cd /home/ubuntu/deploy
+                    export BACKEND_IMAGE=${BACKEND_IMAGE}
+                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                    export BACKEND_PORT=${BACKEND_PORT}
                     docker-compose pull backend
                     docker-compose up -d backend
-                    echo "백엔드 서비스 시작됨"
+                    for i in {1..10}; do curl -sSf http://localhost:${BACKEND_PORT}/health && break || sleep 5; done
                 '
                 """
-                
-                echo "⏳ Waiting for backend to start..."
-                sh "sleep 30"
             }
         }
 
-        // Docker Compose 파일 생성 및 배포 (프론트엔드)
         stage('Deploy Frontend with Docker Compose') {
             steps {
-                echo "🚀 Deploying frontend with Docker Compose..."
-                
-                // Copy existing docker-compose.yml and deploy
+                echo "🚀 Deploying frontend..."
                 sh """
                 scp -o StrictHostKeyChecking=no docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
                 ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
                     cd /home/ubuntu/deploy
-                    docker-compose pull frontend frontend-test
-                    docker-compose up -d frontend frontend-test
-                    echo "프론트엔드 서비스 시작됨"
+                    export FRONTEND_IMAGE=${FRONTEND_IMAGE}
+                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                    export FRONTEND_PROD_PORT=${FRONTEND_PROD_PORT}
+                    docker-compose pull frontend
+                    docker-compose up -d frontend
+                    for i in {1..10}; do curl -sSf http://localhost:${FRONTEND_PROD_PORT} && break || sleep 5; done
                 '
                 """
-                
-                echo "⏳ Waiting for frontend to start..."
-                sh "sleep 10"
             }
         }
 
-        // Cypress E2E 테스트 실행
         stage('Run E2E Tests') {
             steps {
                 echo "🧪 Running Cypress E2E tests..."
                 dir('dev-community/dev-community-frontend') {
-                    // Cypress 테스트 파일 수정 - 하드코딩된 URL 제거
                     sh """
                     find cypress/e2e -name "*.cy.js" -type f -exec sed -i 's|http://localhost:3000/|/|g' {} \\;
-                    """
-                    
-                    // Cypress 테스트 환경 설정 - 환경 변수 사용
-                    sh """
                     echo '{
                       "baseUrl": "${FRONTEND_URL}:${FRONTEND_TEST_PORT}"
                     }' > cypress.config.json
+                    npm install cypress --save-dev
+                    npx cypress run
                     """
-                    
-                    // Cypress 테스트 실행
-                    sh 'npm install cypress --save-dev'
-                    sh 'npx cypress run'
                 }
             }
         }
 
-        // 테스트 성공 시 프로덕션 환경에 프론트엔드 배포
         stage('Deploy Frontend to Production') {
             steps {
-                echo "🚀 Deploying frontend to production..."
+                echo "🚀 Final frontend deployment..."
                 sh """
                 ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
                     docker pull ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
                     docker stop react-app || true
                     docker rm react-app || true
                     docker run -d -p ${FRONTEND_PROD_PORT}:80 --name react-app ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-                    echo "프론트엔드 서비스 시작됨"
                 '
                 """
             }
