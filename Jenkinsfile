@@ -17,7 +17,7 @@ pipeline {
         FRONTEND_PROD_PORT = '80'    // 프로덕션용 포트
         
         // Docker 관련 환경 변수
-        DOCKER_REGISTRY = 'knw125'  // Docker Hub 사용자명
+        DOCKER_REGISTRY = 'jangker'  // Docker Hub 사용자명
     }
 
     triggers {
@@ -29,7 +29,7 @@ pipeline {
         stage('Pull from GitHub') {
             steps {
                 echo "📥 Pulling latest code from GitHub..."
-                git branch: 'develop', url: 'https://github.com/KangNaewon/dev-community.git'
+                git branch: 'develop', url: 'https://github.com/jsjsjs1492/deploy_test.git'
             }
         }
 
