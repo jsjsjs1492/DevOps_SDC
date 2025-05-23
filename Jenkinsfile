@@ -37,10 +37,14 @@ pipeline {
         stage('Build & Push Backend Docker Image') {
             steps {
                 echo "🛠️ Building backend Docker image..."
-                dir('dev-community/dev-community-backend') {
+                dir('dev-community/dev-community-backend') {  // 이 경로가 맞는지 확인 필요
                     script {
+                        // Dockerfile 존재 여부 확인
+                        sh 'ls -la'  // 현재 디렉토리 파일 목록 확인
+                        
                         docker.withRegistry('', 'dockerhub-credential') {
-                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${env.BUILD_NUMBER}", "-f Dockerfile_backend .")
+                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${env.BUILD_NUMBER}", 
+                                "-f ${WORKSPACE}/dev-community/dev-community-backend/Dockerfile_backend .")
                             backendImage.push('latest')
                         }
                     }
@@ -96,29 +100,19 @@ pipeline {
             steps {
                 echo "🚀 Deploying backend with Docker Compose..."
                 
-                // 백엔드 서버에 docker-compose.yml 파일 생성 및 실행
+                // Copy existing docker-compose.yml and deploy
                 sh """
+                scp -o StrictHostKeyChecking=no docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
                 ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
-                    mkdir -p /home/ubuntu/deploy
-                    cat > /home/ubuntu/deploy/docker-compose.yml << EOL
-version: "3.8"
-services:
-  backend:
-    image: ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest
-    container_name: backend-app
-    ports:
-      - "${BACKEND_PORT}:8081"
-    restart: always
-EOL
                     cd /home/ubuntu/deploy
-                    docker-compose pull
-                    docker-compose up -d
+                    docker-compose pull backend
+                    docker-compose up -d backend
                     echo "백엔드 서비스 시작됨"
                 '
                 """
                 
                 echo "⏳ Waiting for backend to start..."
-                sh "sleep 30"  // 백엔드가 완전히 시작될 때까지 대기
+                sh "sleep 30"
             }
         }
 
@@ -127,30 +121,13 @@ EOL
             steps {
                 echo "🚀 Deploying frontend with Docker Compose..."
                 
-                // 프론트엔드 서버에 docker-compose.yml 파일 생성 및 실행
+                // Copy existing docker-compose.yml and deploy
                 sh """
+                scp -o StrictHostKeyChecking=no docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
                 ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-                    mkdir -p /home/ubuntu/deploy
-                    cat > /home/ubuntu/deploy/docker-compose.yml << EOL
-version: "3.8"
-services:
-  frontend:
-    image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-    container_name: react-app
-    ports:
-      - "${FRONTEND_PROD_PORT}:80"
-    restart: always
-  
-  frontend-test:
-    image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-    container_name: react-app-test
-    ports:
-      - "${FRONTEND_TEST_PORT}:80"
-    restart: always
-EOL
                     cd /home/ubuntu/deploy
-                    docker-compose pull
-                    docker-compose up -d
+                    docker-compose pull frontend frontend-test
+                    docker-compose up -d frontend frontend-test
                     echo "프론트엔드 서비스 시작됨"
                 '
                 """
