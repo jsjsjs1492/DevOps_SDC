@@ -1,0 +1,714 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
+/* 전체 페이지 스타일 */
+.community-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  font-family: 'Open Sans', sans-serif;
+}
+
+/* 헤더 스타일 */
+.community-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #4AD395;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* 헤더 우측 버튼 영역 */
+.header-right {
+  display: flex;
+  gap: 1rem;
+}
+
+/* 마이페이지 버튼 스타일 */
+.mypage-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  color: #4AD395;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mypage-btn:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+/* 로그아웃 버튼 스타일 */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid white;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.logout-btn i, .mypage-btn i {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+/* 히어로 섹션 */
+/* 히어로 섹션 수정 */
+.hero-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 4rem;
+  background: linear-gradient(135deg, #4AD395 0%, #65bf97 100%);
+  color: white;
+}
+
+.hero-content h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 게시글 영역 수정 */
+.posts-container {
+  flex: 3;
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.posts-section {
+  flex: 1;
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.popular-posts {
+  border-left: 4px solid #4AD395;
+}
+
+.all-posts {
+  border-left: 4px solid #666;
+}
+
+.all-posts h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #666;
+  padding-bottom: 0.5rem;
+}
+
+/* 반응형 디자인 수정 */
+@media (max-width: 1024px) {
+  .posts-container {
+    flex-direction: column;
+  }
+}
+.hero-content {
+  flex: 1;
+}
+
+.hero-content h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.hero-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-image img {
+  max-width: 80%;
+  border-radius: 15px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.hero-image img:hover {
+  transform: translateY(-10px);
+}
+
+/* 메인 콘텐츠 영역 */
+/* Add these new styles */
+.posts-container {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.posts-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.popular-posts {
+  border-left: 4px solid #4AD395;
+}
+
+.all-posts {
+  border-left: 4px solid #666;
+}
+
+/* Update existing style */
+.community-main {
+  display: flex;
+  padding: 2rem 4rem;
+  gap: 2rem;
+}
+
+/* Update media query */
+@media (max-width: 768px) {
+  .community-main {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .posts-container {
+    gap: 1rem;
+  }
+}
+.popular-posts h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #4AD395;
+  padding-bottom: 0.5rem;
+}
+
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.post-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+  border-left: 4px solid #4AD395;
+}
+
+.post-item:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.post-content {
+  flex: 1;
+}
+
+.post-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.post-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.post-author {
+  display: flex;
+  align-items: center;
+}
+
+.post-author::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4AD395;
+  margin-right: 5px;
+}
+
+.post-likes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4AD395;
+  font-weight: 600;
+}
+
+.post-likes i {
+  font-size: 1.2rem;
+}
+
+/* Update the sidebar styling to fix the squished appearance */
+
+.community-sidebar {
+  width: 300px;
+  margin-left: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.sidebar-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #333;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+}
+
+/* User profile section styling */
+.user-profile {
+  text-align: center;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.profile-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.profile-header h3 {
+  margin: 10px 0 5px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.profile-info {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  background-color: #f0f4ff;
+  padding: 10px 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.write-post-btn {
+  width: 100%;
+  padding: 10px 15px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.write-post-btn i {
+  margin-right: 8px;
+}
+
+.write-post-btn:hover {
+  background-color: #2980b9;
+}
+
+/* Category section styling */
+.sidebar-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-section ul li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  color: #555;
+  font-size: 15px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sidebar-section ul li:last-child {
+  border-bottom: none;
+}
+
+.sidebar-section ul li i {
+  margin-right: 10px;
+  font-size: 18px;
+  color: #3498db;
+}
+
+.sidebar-section ul li:hover {
+  color: #3498db;
+}
+
+/* Tag cloud styling */
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background-color: #f1f1f1;
+  color: #555;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tag:hover {
+  background-color: #e0e0e0;
+}
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  padding: 0.4rem 0.8rem;
+  background-color: #eef2f7;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  background-color: #4AD395;
+  color: white;
+}
+
+/* 사용자 프로필 섹션 */
+.user-profile {
+  text-align: center;
+}
+
+.profile-header {
+  margin-bottom: 1rem;
+}
+
+.profile-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+  border: 3px solid #4AD395;
+  padding: 3px;
+}
+
+.profile-info {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.write-post-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #4AD395;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.write-post-btn i {
+  margin-right: 0.5rem;
+}
+
+.write-post-btn:hover {
+  background-color: #65bf97;
+  transform: translateY(-2px);
+}
+
+/* 푸터 스타일 */
+.community-footer {
+  margin-top: auto;
+  padding: 1.5rem;
+  background-color: #333;
+  color: white;
+  text-align: center;
+}
+
+.attribution {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+
+.attribution a {
+  color: #4AD395;
+  text-decoration: none;
+}
+
+.attribution a:hover {
+  text-decoration: underline;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+  .hero-section {
+    padding: 2rem;
+  }
+  
+  .community-main {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    /* 히어로 섹션 더 축소 */
+    .hero-section {
+      padding: 0.5rem 4rem;
+    }
+    
+    .hero-content h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.3rem;
+    }
+    
+    .hero-content p {
+      font-size: 1rem;
+    }
+    
+    .hero-image img {
+      max-width: 60%;  /* 80%에서 60%로 축소 */
+    }
+    
+    /* 게시글 컨테이너 레이아웃 수정 */
+    .community-main {
+      display: flex;
+      padding: 2rem 4rem;
+      gap: 2rem;
+      justify-content: center;
+    }
+    
+    .posts-container {
+      flex: 2;  /* 3에서 2로 수정하여 전체 너비 축소 */
+      display: flex;
+      flex-direction: row;
+      gap: 2rem;
+      max-width: 1200px;  /* 최대 너비 설정 */
+      margin: 0 auto;
+    }
+    
+    .posts-section {
+      flex: 1;
+      min-width: 0;  /* 너비 오버플로우 방지 */
+    }
+    
+    /* 반응형 디자인 수정 */
+    @media (max-width: 1200px) {
+      .posts-container {
+        flex-direction: column;
+      }
+      
+      .community-main {
+        padding: 2rem;
+      }
+    }
+  }
+  
+  .community-main {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .community-header {
+    padding: 1rem;
+  }
+  
+  .header-left h1 {
+    font-size: 1.4rem;
+  }
+}
+
+.posts-section {
+  flex: 1;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 섹션 헤더 스타일 추가 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.show-more-btn {
+  background: none;
+  border: none;
+  color: #4AD395;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.show-more-btn:hover {
+  background-color: rgba(74, 211, 149, 0.1);
+  transform: scale(1.1);
+}
+
+.popular-posts .section-header h2 {
+  border-bottom: 2px solid #4AD395;
+}
+
+.all-posts .section-header h2 {
+  border-bottom: 2px solid #666;
+}
+
+/* Add these styles to your existing CSS file */
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 50px 0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #3498db;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 50px 0;
+}
+
+.error-container p {
+  color: #e74c3c;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.error-container button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.error-container button:hover {
+  background-color: #2980b9;
+}
+
+.empty-posts {
+  width: 100%;
+  padding: 30px 0;
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 16px;
+}

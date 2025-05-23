@@ -1,0 +1,29 @@
+version: '3.8'  # Docker Compose 파일의 버전을 지정합니다.
+
+services:  # 여러 컨테이너(서비스)를 정의하는 영역입니다.
+  backend:  # 백엔드 서비스 정의
+    build: 
+      context: ./dev-community/dev-community-backend  # Dockerfile과 소스코드가 있는 디렉토리 경로
+      dockerfile: Dockerfile_backend  # 사용할 Dockerfile 파일명 (기본값은 'Dockerfile', 여기선 별도 지정)
+    container_name: backend-app  # 생성될 컨테이너의 이름을 지정
+    ports:
+      - "8081:8081"  # 호스트의 8081 포트를 컨테이너의 8081 포트에 연결 (외부에서 8081로 접근 시 컨테이너의 8080으로 전달)
+    networks:
+      - dev-community-network  # 아래에서 정의한 사용자 정의 네트워크에 연결
+
+  frontend:  # 프론트엔드 서비스 정의
+    build: 
+      context: ./dev-community/dev-community-frontend  # Dockerfile과 소스코드가 있는 디렉토리 경로
+      dockerfile: Dockerfile_frontend  # 사용할 Dockerfile 파일명 (기본값은 'Dockerfile', 여기선 별도 지정)
+    container_name: react-app  # 생성될 컨테이너의 이름을 지정
+    ports:
+      - "80:80"  # 호스트의 8000 포트를 컨테이너의 80 포트에 연결 (외부에서 8000으로 접근 시 컨테이너의 80으로 전달)
+    depends_on:
+      - backend  # frontend 서비스가 backend 서비스가 먼저 실행된 후에 시작됨
+    networks:
+      - dev-community-network  # 같은 네트워크에 연결 (두 서비스가 네트워크 내에서 이름으로 통신 가능)
+
+networks:
+  dev-community-network:
+    driver: bridge  # 브리지 네트워크 드라이버를 사용 (컨테이너 간 통신을 위한 격리된 네트워크 생성)
+
