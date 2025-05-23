@@ -28,7 +28,8 @@ pipeline {
         stage('Pull from GitHub') {
             steps {
                 echo "📥 Pulling latest code from GitHub..."
-                git branch: 'develop', url: 'https://github.com/jsjsjs1492/deploy_test.git'
+                git credentialsId: 'github-credentials', url: 'https://github.com/jsjsjs1492/deploy_test.git', branch: 'develop'
+            
             }
         }
 
@@ -38,8 +39,7 @@ pipeline {
                 dir('dev-community/dev-community-backend') {
                     script {
                         docker.withRegistry('', 'dockerhub-credential') {
-                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest",
-                                "-f Dockerfile_backend .")
+                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest","-f Dockerfile .")
                             backendImage.push('latest')
                         }
                     }
@@ -75,7 +75,7 @@ pipeline {
                     script {
                         docker.withRegistry('', 'dockerhub-credential') {
                             def frontendImage = docker.build("${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest",
-                                "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile_frontend .")
+                                "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile .")
                             frontendImage.push('latest')
                         }
                     }
