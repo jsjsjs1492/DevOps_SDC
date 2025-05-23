@@ -39,31 +39,12 @@ pipeline {
                 echo "🛠️ Building backend Docker image..."
                 dir('dev-community/dev-community-backend') {
                     script {
-                        docker.withRegistry('', 'dockerhub-credentials') {
+                        docker.withRegistry('', 'dockerhub-credential') {
                             def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:${env.BUILD_NUMBER}", "-f Dockerfile_backend .")
                             backendImage.push('latest')
                         }
                     }
                 }
-            }
-        }
-
-        // 백엔드 배포
-        stage('Deploy Backend') {
-            steps {
-                echo "🚀 Deploying backend to remote server..."
-                sh """
-                ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
-                    docker pull ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest
-                    docker stop backend-app || true
-                    docker rm backend-app || true
-                    docker run -d -p ${BACKEND_PORT}:8081 --name backend-app ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest
-                    echo "백엔드 서비스 시작됨"
-                '
-                """
-                
-                echo "⏳ Waiting for backend to start..."
-                sh "sleep 30"  // 백엔드가 완전히 시작될 때까지 대기
             }
         }
 
@@ -99,7 +80,7 @@ pipeline {
                     """
                     
                     script {
-                        docker.withRegistry('', 'dockerhub-credentials') {
+                        docker.withRegistry('', 'dockerhub-credential') {
                             // 백엔드 API URL을 빌드 인자로 전달
                             def frontendImage = docker.build("${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:${env.BUILD_NUMBER}", 
                                 "--build-arg REACT_APP_API_URL=${BACKEND_API_URL} -f Dockerfile_frontend .")
@@ -110,20 +91,71 @@ pipeline {
             }
         }
 
-        // 테스트 환경에 프론트엔드 배포
-        stage('Deploy Frontend to Test') {
+        // Docker Compose 파일 생성 및 배포 (백엔드)
+        stage('Deploy Backend with Docker Compose') {
             steps {
-                echo "🧪 Deploying frontend to test environment..."
+                echo "🚀 Deploying backend with Docker Compose..."
+                
+                // 백엔드 서버에 docker-compose.yml 파일 생성 및 실행
                 sh """
-                ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-                    docker pull ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-                    docker stop react-app-test || true
-                    docker rm react-app-test || true
-                    docker run -d -p ${FRONTEND_TEST_PORT}:80 --name react-app-test ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
+                ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
+                    mkdir -p /home/ubuntu/deploy
+                    cat > /home/ubuntu/deploy/docker-compose.yml << EOL
+version: "3.8"
+services:
+  backend:
+    image: ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest
+    container_name: backend-app
+    ports:
+      - "${BACKEND_PORT}:8081"
+    restart: always
+EOL
+                    cd /home/ubuntu/deploy
+                    docker-compose pull
+                    docker-compose up -d
+                    echo "백엔드 서비스 시작됨"
                 '
                 """
                 
-                echo "⏳ Waiting for test environment to be ready..."
+                echo "⏳ Waiting for backend to start..."
+                sh "sleep 30"  // 백엔드가 완전히 시작될 때까지 대기
+            }
+        }
+
+        // Docker Compose 파일 생성 및 배포 (프론트엔드)
+        stage('Deploy Frontend with Docker Compose') {
+            steps {
+                echo "🚀 Deploying frontend with Docker Compose..."
+                
+                // 프론트엔드 서버에 docker-compose.yml 파일 생성 및 실행
+                sh """
+                ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
+                    mkdir -p /home/ubuntu/deploy
+                    cat > /home/ubuntu/deploy/docker-compose.yml << EOL
+version: "3.8"
+services:
+  frontend:
+    image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
+    container_name: react-app
+    ports:
+      - "${FRONTEND_PROD_PORT}:80"
+    restart: always
+  
+  frontend-test:
+    image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
+    container_name: react-app-test
+    ports:
+      - "${FRONTEND_TEST_PORT}:80"
+    restart: always
+EOL
+                    cd /home/ubuntu/deploy
+                    docker-compose pull
+                    docker-compose up -d
+                    echo "프론트엔드 서비스 시작됨"
+                '
+                """
+                
+                echo "⏳ Waiting for frontend to start..."
                 sh "sleep 10"
             }
         }

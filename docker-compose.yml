@@ -3,7 +3,7 @@ version: '3.8'  # Docker Compose 파일의 버전을 지정합니다.
 services:  # 여러 컨테이너(서비스)를 정의하는 영역입니다.
   backend:  # 백엔드 서비스 정의
     build: 
-      context: ./dev-community/dev-community-backend  # Dockerfile과 소스코드가 있는 디렉토리 경로
+      context: dev-community/dev-community-backend  # Dockerfile과 소스코드가 있는 디렉토리 경로
       dockerfile: Dockerfile_backend  # 사용할 Dockerfile 파일명 (기본값은 'Dockerfile', 여기선 별도 지정)
     container_name: backend-app  # 생성될 컨테이너의 이름을 지정
     ports:
@@ -13,7 +13,7 @@ services:  # 여러 컨테이너(서비스)를 정의하는 영역입니다.
 
   frontend:  # 프론트엔드 서비스 정의
     build: 
-      context: ./dev-community/dev-community-frontend  # Dockerfile과 소스코드가 있는 디렉토리 경로
+      context: dev-community/dev-community-frontend  # Dockerfile과 소스코드가 있는 디렉토리 경로
       dockerfile: Dockerfile_frontend  # 사용할 Dockerfile 파일명 (기본값은 'Dockerfile', 여기선 별도 지정)
     container_name: react-app  # 생성될 컨테이너의 이름을 지정
     ports:
