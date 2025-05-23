@@ -15,7 +15,7 @@ RUN chmod +x ./gradlew && \
     ./gradlew clean build -x test
 
 # ===== 2단계: 실행 환경 (최소한의 JRE 기반 이미지) =====
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:17-jdk
 
 # 작업 디렉토리 설정
 WORKDIR /app
