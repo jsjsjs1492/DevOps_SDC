@@ -38,7 +38,7 @@ pipeline {
             steps {
                 dir('dev-community-frontend') {
                     script {
-                        docker.withRegistry('', 'dockerhub-credentials') {
+                        docker.withRegistry('', 'dockerhub-credential') {
                             docker.build("${FRONTEND_IMAGE}:${env.BUILD_NUMBER}").push('latest')
                         }
                     }

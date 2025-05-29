@@ -17,11 +17,7 @@ pipeline {
         FRONTEND_PROD_PORT = '80'
 
         // Docker 관련
-        DOCKER_REGISTRY = 'jangker'
-        DOCKER_CREDENTIALS = 'dockerhub-credential'
-
-        //Jenkins 
-        GITHUB_CREDENTIALS = 'github-credentials'
+        DOCKER_REGISTRY = 'jangcker'
     }
 
     triggers {
@@ -32,8 +28,7 @@ pipeline {
         stage('Pull from GitHub') {
             steps {
                 echo "📥 Pulling latest code from GitHub..."
-                git credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/jsjsjs1492/deploy_test.git', branch: 'main'
-            
+                git credentialsId: 'github-credentials', url: 'https://github.com/jsjsjs1492/deploy_test.git', branch: 'main'
             }
         }
 
@@ -42,8 +37,8 @@ pipeline {
                 echo "🛠️ Building backend Docker image..."
                 dir('dev-community/dev-community-backend') {
                     script {
-                        docker.withRegistry('', "${DOCKER_CREDENTIALS}") {
-                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest","-f Dockerfile .")
+                        docker.withRegistry('', 'dockerhub-credential') {
+                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest", "-f Dockerfile .")
                             backendImage.push('latest')
                         }
                     }
@@ -77,9 +72,11 @@ pipeline {
                     """
 
                     script {
-                        docker.withRegistry('', "${DOCKER_CREDENTIALS}") {
-                            def frontendImage = docker.build("${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest",
-                                "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile .")
+                        docker.withRegistry('', 'dockerhub-credential') {
+                            def frontendImage = docker.build(
+                                "${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest",
+                                "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile ."
+                            )
                             frontendImage.push('latest')
                         }
                     }
@@ -90,36 +87,42 @@ pipeline {
         stage('Deploy Backend with Docker Compose') {
             steps {
                 echo "🚀 Deploying backend..."
-                sh """
-                scp -o StrictHostKeyChecking=no docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
-                ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
-                    cd /home/ubuntu/deploy
-                    export BACKEND_IMAGE=${BACKEND_IMAGE}
-                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-                    export BACKEND_PORT=${BACKEND_PORT}
-                    docker-compose pull backend
-                    docker-compose up -d backend
-                    for i in {1..10}; do curl -sSf http://localhost:${BACKEND_PORT}/health && break || sleep 5; done
-                '
-                """
+                sshagent(credentials: ['admin']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
+                    scp -o StrictHostKeyChecking=no docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
+                    ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
+                        cd /home/ubuntu/deploy
+                        export BACKEND_IMAGE=${BACKEND_IMAGE}
+                        export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                        export BACKEND_PORT=${BACKEND_PORT}
+                        docker-compose pull backend
+                        docker-compose up -d backend
+                        for i in {1..10}; do curl -sSf http://localhost:${BACKEND_PORT}/health && break || sleep 5; done
+                    '
+                    """
+                }
             }
         }
 
         stage('Deploy Frontend with Docker Compose') {
             steps {
                 echo "🚀 Deploying frontend..."
-                sh """
-                scp -o StrictHostKeyChecking=no docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
-                ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-                    cd /home/ubuntu/deploy
-                    export FRONTEND_IMAGE=${FRONTEND_IMAGE}
-                    export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-                    export FRONTEND_PROD_PORT=${FRONTEND_PROD_PORT}
-                    docker-compose pull frontend
-                    docker-compose up -d frontend
-                    for i in {1..10}; do curl -sSf http://localhost:${FRONTEND_PROD_PORT} && break || sleep 5; done
-                '
-                """
+                sshagent(credentials: ['admin']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
+                    scp -o StrictHostKeyChecking=no docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
+                    ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
+                        cd /home/ubuntu/deploy
+                        export FRONTEND_IMAGE=${FRONTEND_IMAGE}
+                        export DOCKER_REGISTRY=${DOCKER_REGISTRY}
+                        export FRONTEND_PROD_PORT=${FRONTEND_PROD_PORT}
+                        docker-compose pull frontend
+                        docker-compose up -d frontend
+                        for i in {1..10}; do curl -sSf http://localhost:${FRONTEND_PROD_PORT} && break || sleep 5; done
+                    '
+                    """
+                }
             }
         }
 
@@ -142,14 +145,17 @@ pipeline {
         stage('Deploy Frontend to Production') {
             steps {
                 echo "🚀 Final frontend deployment..."
-                sh """
-                ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-                    docker pull ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-                    docker stop react-app || true
-                    docker rm react-app || true
-                    docker run -d -p ${FRONTEND_PROD_PORT}:80 --name react-app ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-                '
-                """
+                sshagent(credentials: ['admin']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
+                        cd /home/ubuntu/deploy
+                        docker pull ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
+                        docker stop react-app || true
+                        docker rm react-app || true
+                        docker run -d -p ${FRONTEND_PROD_PORT}:80 --name react-app ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
+                    '
+                    """
+                }
             }
         }
     }

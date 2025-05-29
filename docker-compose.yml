@@ -8,13 +8,12 @@ services:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     networks:
       - dev-community-network
-#DB volume 추가
 
   frontend:
-    image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
+    image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE:-nginx:alpine}
     container_name: react-app
     ports:
-      - "${FRONTEND_PROD_PORT}:80"
+      - "${FRONTEND_PROD_PORT:-9999}:80"
     depends_on:
       - backend
     networks:
