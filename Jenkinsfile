@@ -45,14 +45,14 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
       // docker-compose로 backend, frontend 이미지 빌드
       // 이후 Docker Hub로 push (도커 허브 credential 필요)
       steps {
-        dir('dev-community') {
-          script {
-            docker.withRegistry('', 'dockerhub-credential') {
-              sh 'docker-compose -f docker-compose.yml build'
-              sh 'docker-compose -f docker-compose.yml push'
-            }
+        
+        script {
+          docker.withRegistry('', 'dockerhub-credential') {
+            sh 'docker-compose -f docker-compose.yml build'
+            sh 'docker-compose -f docker-compose.yml push'
           }
         }
+        
       }
     }
 
@@ -62,10 +62,10 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
         sshagent(['admin']) {
           sh """
           ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-          scp dev-community/docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
+          scp ./docker-compose.deploy.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
           
           ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-          scp dev-community/docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
+          scp ./docker-compose.deploy.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
           """
         }
       }
@@ -99,8 +99,8 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
             export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
             export FRONTEND_IMAGE=${FRONTEND_IMAGE} &&
             export FRONTEND_PROD_PORT=${FRONTEND_PORT} &&
-            docker-compose pull frontend &&
-            docker-compose up -d frontend
+            docker-compose -f docker-compose.deploy.yml pull backend db &&
+            docker-compose -f docker-compose.deploy.yml up -d backend db
           '
           """
         }
@@ -113,7 +113,7 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
         dir('dev-community/dev-community-frontend') {
           sh 'npm install cypress --save-dev'  // Cypress 설치
           sh 'npx cypress verify'              // 바이너리 확인
-          sh "npx cypress run --config baseUrl=${FRONTEND_URL}"  // 테스트 실행
+          sh "npx cypress run --config baseUrl=http://${FRONTEND_URL}"  // 테스트 실행
         }
       }
     }
