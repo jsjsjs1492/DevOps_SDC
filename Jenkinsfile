@@ -81,6 +81,7 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
             export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
             export BACKEND_IMAGE=${BACKEND_IMAGE} &&
             export BACKEND_PORT=${BACKEND_PORT} &&
+            docker compose -f docker-compose.deploy.yml down || true &&
             docker compose -f docker-compose.deploy.yml pull backend db &&
             docker compose -f docker-compose.deploy.yml up -d backend db
           '
@@ -99,6 +100,8 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
             export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
             export FRONTEND_IMAGE=${FRONTEND_IMAGE} &&
             export FRONTEND_PROD_PORT=${FRONTEND_PORT} &&
+            export BACKEND_PORT=${BACKEND_PORT} &&
+            export BACKEND_IMAGE=${BACKEND_IMAGE} &&
             docker compose -f docker-compose.deploy.yml pull frontend &&
             docker compose -f docker-compose.deploy.yml up -d frontend
           '
