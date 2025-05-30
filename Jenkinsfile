@@ -1,171 +1,129 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        // 백엔드 관련 환경 변수
-        BACKEND_IMAGE = 'dev-community-backend'
-        BACKEND_SERVER = "ubuntu@52.78.59.185"
-        BACKEND_PORT = "8081"
-        BACKEND_URL = "http://52.78.59.185"
-        BACKEND_API_URL = "${BACKEND_URL}:${BACKEND_PORT}"
+  // 환경 변수 정의: 이미지 이름, 서버 주소, 포트 등
+  environment {
+    DOCKER_REGISTRY = 'jangcker'
 
-        // 프론트엔드 관련 환경 변수
-        FRONTEND_IMAGE = 'dev-community-frontend'
-        FRONTEND_SERVER = "ubuntu@13.124.40.201"
-        FRONTEND_URL = "http://13.124.40.201"
-        FRONTEND_TEST_PORT = '3000'
-        FRONTEND_PROD_PORT = '80'
+    BACKEND_IMAGE = 'dev-community-backend'
+    FRONTEND_IMAGE = 'dev-community-frontend'
 
-        // Docker 관련
-        DOCKER_REGISTRY = 'jangcker'
+    BACKEND_SERVER = 'ubuntu@52.78.59.185'
+    FRONTEND_SERVER = 'ubuntu@13.124.40.201'
+
+    BACKEND_PORT = '8081'
+    FRONTEND_PORT = '80'
+
+    BACKEND_URL = "http://52.78.59.185"
+    FRONTEND_URL = "http://13.124.40.201"
+  }
+
+  stages {
+
+    stage('1. GitHub 코드 Pull') {
+      // GitHub에서 최신 소스 코드 가져오기
+      steps {
+        git credentialsId: 'github-credentials',
+            url: 'https://github.com/jsjsjs1492/deploy_test.git',
+            branch: 'main'
+      }
     }
 
-    triggers {
-        githubPush()
+    stage('2. .env.production 파일 생성') {
+      // 프론트엔드 빌드용 환경변수 설정 파일 생성
+      // 이 파일은 React 빌드 시 baseUrl 등으로 사용됨
+      steps {
+        dir('dev-community/dev-community-frontend') {
+          writeFile file: '.env.production', text: """
+REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
+"""
+        }
+      }
     }
 
-    stages {
-        stage('Pull from GitHub') {
-            steps {
-                echo "📥 Pulling latest code from GitHub..."
-                git credentialsId: 'github-credentials', url: 'https://github.com/jsjsjs1492/deploy_test.git', branch: 'main'
+    stage('3. Docker Compose로 서비스 빌드 및 Push') {
+      // docker-compose로 backend, frontend 이미지 빌드
+      // 이후 Docker Hub로 push (도커 허브 credential 필요)
+      steps {
+        dir('dev-community') {
+          script {
+            docker.withRegistry('', 'dockerhub-credential') {
+              sh 'docker-compose -f docker-compose.yml build'
+              sh 'docker-compose -f docker-compose.yml push'
             }
+          }
         }
-
-        stage('Build & Push Backend Docker Image') {
-            steps {
-                echo "🛠️ Building backend Docker image..."
-                dir('dev-community/dev-community-backend') {
-                    script {
-                        docker.withRegistry('', 'dockerhub-credential') {
-                            def backendImage = docker.build("${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest", "-f Dockerfile .")
-                            backendImage.push('latest')
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Build & Push Frontend Docker Image') {
-            steps {
-                echo "🛠️ Building frontend Docker image..."
-                dir('dev-community/dev-community-frontend') {
-                    sh 'mkdir -p nginx'
-
-                    sh """
-                    echo 'server {
-                        listen 80;
-                        location / {
-                            root /usr/share/nginx/html;
-                            index index.html index.htm;
-                            try_files \$uri \$uri/ /index.html;
-                        }
-                        location /api {
-                            proxy_pass http://backend:${BACKEND_PORT};
-                            proxy_http_version 1.1;
-                            proxy_set_header Upgrade \$http_upgrade;
-                            proxy_set_header Connection "upgrade";
-                            proxy_set_header Host \$host;
-                            proxy_cache_bypass \$http_upgrade;
-                        }
-                    }' > nginx/default.conf
-                    """
-
-                    script {
-                        docker.withRegistry('', 'dockerhub-credential') {
-                            def frontendImage = docker.build(
-                                "${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest",
-                                "--build-arg REACT_APP_API_URL=http://backend:${BACKEND_PORT} -f Dockerfile ."
-                            )
-                            frontendImage.push('latest')
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Deploy Backend with Docker Compose') {
-            steps {
-                echo "🚀 Deploying backend..."
-                sshagent(credentials: ['admin']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-                    scp -o StrictHostKeyChecking=no docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
-                    ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
-                        cd /home/ubuntu/deploy
-                        export BACKEND_IMAGE=${BACKEND_IMAGE}
-                        export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-                        export BACKEND_PORT=${BACKEND_PORT}
-                        docker-compose pull backend
-                        docker-compose up -d backend
-                        for i in {1..10}; do curl -sSf http://localhost:${BACKEND_PORT}/health && break || sleep 5; done
-                    '
-                    """
-                }
-            }
-        }
-
-        stage('Deploy Frontend with Docker Compose') {
-            steps {
-                echo "🚀 Deploying frontend..."
-                sshagent(credentials: ['admin']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-                    scp -o StrictHostKeyChecking=no docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
-                    ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-                        cd /home/ubuntu/deploy
-                        export FRONTEND_IMAGE=${FRONTEND_IMAGE}
-                        export DOCKER_REGISTRY=${DOCKER_REGISTRY}
-                        export FRONTEND_PROD_PORT=${FRONTEND_PROD_PORT}
-                        docker-compose pull frontend
-                        docker-compose up -d frontend
-                        for i in {1..10}; do curl -sSf http://localhost:${FRONTEND_PROD_PORT} && break || sleep 5; done
-                    '
-                    """
-                }
-            }
-        }
-
-        stage('Run E2E Tests') {
-            steps {
-                echo "🧪 Running Cypress E2E tests..."
-                dir('dev-community/dev-community-frontend') {
-                    sh """
-                    find cypress/e2e -name "*.cy.js" -type f -exec sed -i 's|http://localhost:3000/|/|g' {} \\;
-                    echo '{
-                      "baseUrl": "${FRONTEND_URL}:${FRONTEND_TEST_PORT}"
-                    }' > cypress.config.json
-                    npm install cypress --save-dev
-                    npx cypress run
-                    """
-                }
-            }
-        }
-
-        stage('Deploy Frontend to Production') {
-            steps {
-                echo "🚀 Final frontend deployment..."
-                sshagent(credentials: ['admin']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-                        cd /home/ubuntu/deploy
-                        docker pull ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-                        docker stop react-app || true
-                        docker rm react-app || true
-                        docker run -d -p ${FRONTEND_PROD_PORT}:80 --name react-app ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
-                    '
-                    """
-                }
-            }
-        }
+      }
     }
 
-    post {
-        success {
-            echo "🎉 Deployment completed successfully!"
+    stage('4. 리모트 서버에 docker-compose 파일 및 관련 결과물 전송') {
+      // docker-compose.yml 파일을 각 배포 서버로 복사
+      steps {
+        sshagent(['admin']) {
+          sh """
+          scp dev-community/docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
+          scp dev-community/docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
+          """
         }
-        failure {
-            echo "❌ Deployment failed. Check the logs."
-        }
+      }
     }
+
+    stage('5. 백엔드 및 DB 서버 기동') {
+      // 백엔드 서버에서 docker-compose up -d backend db 실행
+      steps {
+        sshagent(['admin']) {
+          sh """
+          ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
+            cd /home/ubuntu/deploy &&
+            export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
+            export BACKEND_IMAGE=${BACKEND_IMAGE} &&
+            export BACKEND_PORT=${BACKEND_PORT} &&
+            docker-compose pull backend db &&
+            docker-compose up -d backend db
+          '
+          """
+        }
+      }
+    }
+
+    stage('6. 프론트엔드 서버 기동') {
+      // 프론트 서버에서 docker-compose up -d frontend 실행
+      steps {
+        sshagent(['admin']) {
+          sh """
+          ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
+            cd /home/ubuntu/deploy &&
+            export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
+            export FRONTEND_IMAGE=${FRONTEND_IMAGE} &&
+            export FRONTEND_PROD_PORT=${FRONTEND_PORT} &&
+            docker-compose pull frontend &&
+            docker-compose up -d frontend
+          '
+          """
+        }
+      }
+    }
+
+    stage('7. Cypress E2E 테스트 실행') {
+      // 실제 배포된 프론트 주소를 기준으로 Cypress 테스트 실행
+      steps {
+        dir('dev-community/dev-community-frontend') {
+          sh 'npm install cypress --save-dev'  // Cypress 설치
+          sh 'npx cypress verify'              // 바이너리 확인
+          sh "npx cypress run --config baseUrl=${FRONTEND_URL}"  // 테스트 실행
+        }
+      }
+    }
+  }
+
+  post {
+    // 파이프라인 전체 성공 시 메시지
+    success {
+      echo "✅ 전체 배포 및 테스트 성공"
+    }
+    // 실패 시 메시지
+    failure {
+      echo "❌ 실패: 로그를 확인하세요"
+    }
+  }
 }
