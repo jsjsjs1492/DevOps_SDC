@@ -14,8 +14,8 @@ pipeline {
     BACKEND_PORT = '8081'
     FRONTEND_PORT = '80'
 
-    BACKEND_URL = "http://52.78.59.185"
-    FRONTEND_URL = "http://13.124.40.201"
+    BACKEND_URL = "52.78.59.185"
+    FRONTEND_URL = "13.124.40.201"
   }
 
   stages {
@@ -61,7 +61,10 @@ REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
       steps {
         sshagent(['admin']) {
           sh """
+          ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
           scp dev-community/docker-compose.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
+          
+          ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
           scp dev-community/docker-compose.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
           """
         }
