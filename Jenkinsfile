@@ -72,34 +72,29 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
     stage('5. 백엔드 및 DB 서버 기동 (SSH 내 export)') {
       steps {
         sshagent(['admin']) {
-          withCredentials([
-            // Jenkins에 등록된 DB credential (ID: prod-spring-datasource)
-            usernamePassword(credentialsId: 'prod-spring-datasource',
-                             usernameVariable: 'DB_USER',
-                             passwordVariable: 'DB_PASS'),
-            // Jenkins에 등록된 메일 credential (ID: prod-mail-account)
-            usernamePassword(credentialsId: 'prod-mail-account',
-                             usernameVariable: 'MAIL_USER',
-                             passwordVariable: 'MAIL_PASS')
-          ]) {
+          
             sh """
               ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
                 cd /home/ubuntu/deploy &&
+
+                export DOCKER_REGISTRY="jangcker"
+                export BACKEND_IMAGE="dev-community-backend"
+                export BACKEND_PORT="8081"
 
                 ################################################################################
                 # 1) DB 연결 환경 변수 export
                 ################################################################################
                 export SPRING_DATASOURCE_URL="jdbc:mysql://db:3306/dev_community?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8"
-                export SPRING_DATASOURCE_USERNAME="${DB_USER}"
-                export SPRING_DATASOURCE_PASSWORD="${DB_PASS}"
+                export SPRING_DATASOURCE_USERNAME="root"
+                export SPRING_DATASOURCE_PASSWORD="1234"
 
                 ################################################################################
                 # 2) Mail 서버 환경 변수 export
                 ################################################################################
                 export MAIL_HOST="mail.sogang.ac.kr"
                 export MAIL_PORT="465"
-                export MAIL_USERNAME="${MAIL_USER}"
-                export MAIL_PASSWORD="${MAIL_PASS}"
+                export MAIL_USERNAME="jesjsjes"
+                export MAIL_PASSWORD="wndrnrwlq1492@"
 
                 ################################################################################
                 # 3) Docker Compose: 기존 컨테이너 종료 → 최신 이미지 Pull → 신규 기동
@@ -109,7 +104,7 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
                 docker compose -f docker-compose.backend.yml up -d
               '
             """
-          }
+          
         }
       }
     }
@@ -125,6 +120,10 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
               # (필요할 경우) 프론트 환경 변수 export
               # 예: export REACT_APP_API_URL="http://${BACKEND_URL}:${BACKEND_PORT}"
 
+              export DOCKER_REGISTRY="jangcker"
+              export FRONTEND_IMAGE="dev-community-frontend"
+              
+
               # Docker Compose: Pull → Up (orphan 제거 포함)
               docker compose -f docker-compose.frontend.yml pull &&
               docker compose -f docker-compose.frontend.yml up -d --remove-orphans
@@ -137,20 +136,32 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
     // ================================================================
     stage('7. Cypress E2E 테스트 실행') {
       steps {
-        sh '''
-          # ────────────────────────────────────────────────────────────────
-          # 기존 Cypress 컨테이너(남아있는 테스트 컨테이너) 정리
-          # ────────────────────────────────────────────────────────────────
-          docker ps -a --filter ancestor=cypress/included:12.0.0 \
-            --format "{{.ID}}" | xargs -r docker rm -f
+        // ❶ SSH 키만 붙여서 SSH 에이전트 실행
+        sshagent(['admin']) {
+          sh """
+            ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
+              cd /home/ubuntu/deploy &&
 
-          echo "📦 Running Cypress E2E tests in Docker..."
-          docker run --rm \
-            -v "$PWD/dev-community/dev-community-frontend:/e2e" \
-            -w /e2e \
-            cypress/included:12.0.0 \
-            npx cypress run --config baseUrl=http://${FRONTEND_URL}
-        '''
+              # ───────────────────────────────────────────────────────────────────────
+              # 1) 혹시 남아 있는 Cypress 또는 프론트 컨테이너가 있으면 모두 내린다.
+              # ───────────────────────────────────────────────────────────────────────
+              docker compose -f docker-compose.frontend.yml down --remove-orphans || true
+
+              # ───────────────────────────────────────────────────────────────────────
+              # 2) "frontend" 컨테이너만 올려둔다 (테스트를 위한 정적 파일 서빙 준비).
+              #    (미리 이미지는 pull 되어 있다고 가정)
+              # ───────────────────────────────────────────────────────────────────────
+              docker compose -f docker-compose.frontend.yml up -d frontend
+
+              # ───────────────────────────────────────────────────────────────────────
+              # 3) Cypress 서비스만 실행 → 완료되면 exit code 반환
+              #    --exit-code-from 옵션을 주면, cypress 서비스가 종료될 때
+              #    자동으로 모든 서비스(frontend 포함)를 같이 내립니다.
+              # ───────────────────────────────────────────────────────────────────────
+              docker compose -f docker-compose.frontend.yml up --exit-code-from cypress cypress
+            '
+          """
+        }
       }
     }
   } // stages
