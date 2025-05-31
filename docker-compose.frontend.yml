@@ -18,7 +18,7 @@ services:
       - frontend
     environment:
       - CYPRESS_baseUrl=http://frontend:80
-    command: ["npx", "cypress", "run", "--config", "baseUrl=http://frontend:80"]
+    command: ["npx", "cypress", "run", "--config-file", "/e2e/cypress.config.js", "--config", "baseUrl=http://frontend:80"]
     networks:
       - dev-network
 
