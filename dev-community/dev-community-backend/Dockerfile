@@ -29,4 +29,4 @@ COPY --from=builder /app/build/libs/*.jar /var/deploy/dev-community-backend.jar
 EXPOSE 8081
 
 # 애플리케이션 실행 (8081 포트 사용)
-CMD ["java", "-Dserver.port=8081", "-jar", "/var/deploy/dev-community-backend.jar"]
+CMD ["java", "-Dspring.profiles.active=prod", "-Dserver.port=8081", "-jar", "/var/deploy/dev-community-backend.jar"]

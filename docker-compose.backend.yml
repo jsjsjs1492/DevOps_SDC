@@ -19,9 +19,14 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/dev_community?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
+      # 아래 키만 선언. 실제 값은 SSH에서 export된 환경 변수를 읽어감.
+      - SPRING_DATASOURCE_URL
+      - SPRING_DATASOURCE_USERNAME
+      - SPRING_DATASOURCE_PASSWORD
+      - MAIL_HOST
+      - MAIL_PORT
+      - MAIL_USERNAME
+      - MAIL_PASSWORD
     volumes:
       - ./backend-logs:/app/logs
     depends_on:

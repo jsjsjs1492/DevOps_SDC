@@ -1,27 +1,21 @@
 pipeline {
   agent any
 
-  // 환경 변수 정의: 이미지 이름, 서버 주소, 포트 등
   environment {
-    DOCKER_REGISTRY = 'jangcker'
-
-    BACKEND_IMAGE = 'dev-community-backend'
-    FRONTEND_IMAGE = 'dev-community-frontend'
-
-    BACKEND_SERVER = 'ubuntu@52.78.59.185'
-    FRONTEND_SERVER = 'ubuntu@13.124.40.201'
-
-    BACKEND_PORT = '8081'
-    FRONTEND_PORT = '80'
-
-    BACKEND_URL = "52.78.59.185"
-    FRONTEND_URL = "13.124.40.201"
+    DOCKER_REGISTRY   = 'jangcker'
+    BACKEND_IMAGE     = 'dev-community-backend'
+    FRONTEND_IMAGE    = 'dev-community-frontend'
+    BACKEND_SERVER    = 'ubuntu@52.78.59.185'
+    FRONTEND_SERVER   = 'ubuntu@13.124.40.201'
+    BACKEND_PORT      = '8081'
+    FRONTEND_PORT     = '80'
+    BACKEND_URL       = "52.78.59.185"
+    FRONTEND_URL      = "13.124.40.201"
   }
 
   stages {
-
+    // ================================================================
     stage('1. GitHub 코드 Pull') {
-      // GitHub에서 최신 소스 코드 가져오기
       steps {
         git credentialsId: 'github-credentials',
             url: 'https://github.com/jsjsjs1492/deploy_test.git',
@@ -29,107 +23,145 @@ pipeline {
       }
     }
 
-    stage('2. .env.production 파일 생성') {
-      // 프론트엔드 빌드용 환경변수 설정 파일 생성
-      // 이 파일은 React 빌드 시 baseUrl 등으로 사용됨
+    // ================================================================
+    stage('2. React .env.production 생성 (프론트)') {
       steps {
         dir('dev-community/dev-community-frontend') {
           writeFile file: '.env.production', text: """
-REACT_APP_API_URL=${BACKEND_URL}:${BACKEND_PORT}
+REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
 """
         }
       }
     }
 
-    stage('3. Docker Compose로 서비스 빌드 및 Push') {
-      // docker-compose로 backend, frontend 이미지 빌드
-      // 이후 Docker Hub로 push (도커 허브 credential 필요)
+    // ================================================================
+    stage('3. Docker 이미지 빌드 및 Push') {
       steps {
-        
         script {
           docker.withRegistry('', 'dockerhub-credential') {
-            sh 'docker compose -f docker-compose.yml build'
-            sh 'docker compose -f docker-compose.yml push'
+            // 백엔드 이미지 빌드
+            sh 'docker build -t ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest dev-community/dev-community-backend'
+            // 프론트엔드 이미지 빌드
+            sh 'docker build -t ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest dev-community/dev-community-frontend'
+            // Docker Hub에 Push
+            sh 'docker push ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest'
+            sh 'docker push ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest'
           }
         }
-        
       }
     }
 
-    stage('4. 리모트 서버에 docker-compose 파일 및 관련 결과물 전송') {
-      // docker-compose.yml 파일을 각 배포 서버로 복사
+    // ================================================================
+    stage('4. 리모트 서버에 Compose 파일 전송') {
       steps {
         sshagent(['admin']) {
           sh """
-          ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-          scp ./docker-compose.deploy.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
-          
-          ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-          scp ./docker-compose.deploy.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
+            # 백엔드 서버에 디렉토리 생성 및 Compose 파일 복사
+            ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
+            scp ./docker-compose.backend.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
+
+            # 프론트엔드 서버에 디렉토리 생성 및 Compose 파일 복사
+            ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
+            scp ./docker-compose.frontend.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
           """
         }
       }
     }
 
-    stage('5. 백엔드 및 DB 서버 기동') {
-      // 백엔드 서버에서 docker-compose up -d backend db 실행
+    // ================================================================
+    stage('5. 백엔드 및 DB 서버 기동 (SSH 내 export)') {
       steps {
         sshagent(['admin']) {
-          sh """
-          ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
-            cd /home/ubuntu/deploy &&
-            export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
-            export BACKEND_IMAGE=${BACKEND_IMAGE} &&
-            export BACKEND_PORT=${BACKEND_PORT} &&
-            docker compose -f docker-compose.deploy.yml down || true &&
-            docker compose -f docker-compose.deploy.yml pull backend db &&
-            docker compose -f docker-compose.deploy.yml up -d backend db
-          '
-          """
+          withCredentials([
+            // Jenkins에 등록된 DB credential (ID: prod-spring-datasource)
+            usernamePassword(credentialsId: 'prod-spring-datasource',
+                             usernameVariable: 'DB_USER',
+                             passwordVariable: 'DB_PASS'),
+            // Jenkins에 등록된 메일 credential (ID: prod-mail-account)
+            usernamePassword(credentialsId: 'prod-mail-account',
+                             usernameVariable: 'MAIL_USER',
+                             passwordVariable: 'MAIL_PASS')
+          ]) {
+            sh """
+              ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} '
+                cd /home/ubuntu/deploy &&
+
+                ################################################################################
+                # 1) DB 연결 환경 변수 export
+                ################################################################################
+                export SPRING_DATASOURCE_URL="jdbc:mysql://db:3306/dev_community?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8"
+                export SPRING_DATASOURCE_USERNAME="${DB_USER}"
+                export SPRING_DATASOURCE_PASSWORD="${DB_PASS}"
+
+                ################################################################################
+                # 2) Mail 서버 환경 변수 export
+                ################################################################################
+                export MAIL_HOST="mail.sogang.ac.kr"
+                export MAIL_PORT="465"
+                export MAIL_USERNAME="${MAIL_USER}"
+                export MAIL_PASSWORD="${MAIL_PASS}"
+
+                ################################################################################
+                # 3) Docker Compose: 기존 컨테이너 종료 → 최신 이미지 Pull → 신규 기동
+                ################################################################################
+                docker compose -f docker-compose.backend.yml down || true &&
+                docker compose -f docker-compose.backend.yml pull &&
+                docker compose -f docker-compose.backend.yml up -d
+              '
+            """
+          }
         }
       }
     }
 
+    // ================================================================
     stage('6. 프론트엔드 서버 기동') {
-      // 프론트 서버에서 docker-compose up -d frontend 실행
       steps {
         sshagent(['admin']) {
           sh """
-          ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-            cd /home/ubuntu/deploy &&
-            export DOCKER_REGISTRY=${DOCKER_REGISTRY} &&
-            export FRONTEND_IMAGE=${FRONTEND_IMAGE} &&
-            export FRONTEND_PROD_PORT=${FRONTEND_PORT} &&
-            export BACKEND_PORT=${BACKEND_PORT} &&
-            export BACKEND_IMAGE=${BACKEND_IMAGE} &&
-            docker compose -f docker-compose.deploy.yml pull frontend &&
-            docker compose -f docker-compose.deploy.yml up -d frontend
-          '
+            ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
+              cd /home/ubuntu/deploy &&
+
+              # (필요할 경우) 프론트 환경 변수 export
+              # 예: export REACT_APP_API_URL="http://${BACKEND_URL}:${BACKEND_PORT}"
+
+              # Docker Compose: Pull → Up (orphan 제거 포함)
+              docker compose -f docker-compose.frontend.yml pull &&
+              docker compose -f docker-compose.frontend.yml up -d --remove-orphans
+            '
           """
         }
       }
     }
 
+    // ================================================================
     stage('7. Cypress E2E 테스트 실행') {
-      // 실제 배포된 프론트 주소를 기준으로 Cypress 테스트 실행
       steps {
-        dir('dev-community/dev-community-frontend') {
-          sh 'npm install cypress --save-dev'  // Cypress 설치
-          sh 'npx cypress verify'              // 바이너리 확인
-          sh "npx cypress run --config baseUrl=http://${FRONTEND_URL}"  // 테스트 실행
-        }
+        sh '''
+          # ────────────────────────────────────────────────────────────────
+          # 기존 Cypress 컨테이너(남아있는 테스트 컨테이너) 정리
+          # ────────────────────────────────────────────────────────────────
+          docker ps -a --filter ancestor=cypress/included:12.0.0 \
+            --format "{{.ID}}" | xargs -r docker rm -f
+
+          echo "📦 Running Cypress E2E tests in Docker..."
+          docker run --rm \
+            -v "$PWD/dev-community/dev-community-frontend:/e2e" \
+            -w /e2e \
+            cypress/included:12.0.0 \
+            npx cypress run --config baseUrl=http://${FRONTEND_URL}
+        '''
       }
     }
-  }
+  } // stages
 
+  // ================================================================
   post {
-    // 파이프라인 전체 성공 시 메시지
     success {
       echo "✅ 전체 배포 및 테스트 성공"
     }
-    // 실패 시 메시지
     failure {
       echo "❌ 실패: 로그를 확인하세요"
     }
   }
-}
+} // pipeline
