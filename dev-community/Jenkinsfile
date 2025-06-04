@@ -66,7 +66,7 @@ pipeline {
               # ───────────────────────────────────────────────────────────────────────
               export DOCKER_REGISTRY="jangcker"
               export FRONTEND_IMAGE="dev-community-frontend"
-              export FRONTEND_PORT="5001"
+              export FRONTEND_PORT="5002"
 
               # ───────────────────────────────────────────────────────────────────────
               # 2) 프론트엔드(nginx) 컨테이너 종료료
@@ -244,7 +244,7 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
               # ───────────────────────────────────────────────────────────────────────
               export DOCKER_REGISTRY="jangcker"
               export FRONTEND_IMAGE="dev-community-frontend"
-              export FRONTEND_PORT="5001"
+              export FRONTEND_PORT="5002"
 
               # ───────────────────────────────────────────────────────────────────────
               # 2) 프론트엔드(nginx) 컨테이너 종료 후, 빌드된 최신 이미지로 기동
