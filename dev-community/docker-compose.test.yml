@@ -4,36 +4,48 @@ services:
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: appdb
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppass
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: dev_community
+    networks:
+      - test-network
 
   backend:
     build:
-      context: ./backend
+      context: ./dev-community-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/appdb
-      SPRING_DATASOURCE_USERNAME: appuser
-      SPRING_DATASOURCE_PASSWORD: apppass
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/dev_community?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
     ports:
-      -8081:8081
+      - "8081:8081"
     depends_on:
       - db
+    networks:
+      - test-network
 
   frontend:
     build:
-      context: ./frontend
+      context: ./dev-community-frontend
     environment:
       - REACT_APP_API_URL=http://backend:8081
+    ports:
+      - "3000:80"
     depends_on:
       - backend
+    networks:
+      - test-network
 
   cypress:
     image: cypress/included:12.0.0
     working_dir: /e2e
     volumes:
-      - ./frontend:/e2e
+      - ./dev-community-frontend:/e2e
     depends_on:
       - frontend
     command: ["npx", "cypress", "run", "--config", "baseUrl=http://frontend"]
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
