@@ -16,4 +16,5 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     List<PostLike> findAllByUserId(Long userId);
     List<PostLike> findAllByPostId(Long postId);
     int countByPostId(Long postId);
+    // TODO: 사용자가 받은 총 추천 수 조회 구현 (calculateTotalRecommendationsByUserId)
 }

@@ -51,6 +51,7 @@ public class PostService {
         return new CreateResponseDto(post.getId(), post.getCreatedAt());
     }
 
+    // 게시글 id
     public Post findById(Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다."));
@@ -113,15 +114,30 @@ public class PostService {
 
     public void createPostLike(Long postId) {
         Member loginMember = SessionUtils.getLoginMember(httpSession);
-        final var star = postLikeRepository.findByPostIdAndUserId(postId, loginMember.getId());
-        if(star.isEmpty()){
-            postLikeRepository.save(new PostLike(loginMember.getId(), postId));
+        if (postRepository.findById(postId).isPresent()) {
+            final var like = postLikeRepository.findByPostIdAndUserId(postId, loginMember.getId());
+            if(like.isEmpty()){
+                postLikeRepository.save(new PostLike(loginMember.getId(), postId));
+                Post post = postRepository.findById(postId).get();
+                Integer likeCounts = post.getLikeCounts();
+                post.setLikeCounts(likeCounts + 1);
+                postRepository.save(post);
+            }
         }
     }
 
     public void deletePostLike(Long postId) {
         Member loginMember = SessionUtils.getLoginMember(httpSession);
-        postLikeRepository.deleteByPostIdAndUserId(postId, loginMember.getId());
+        if (postRepository.findById(postId).isPresent()) {
+            final var star = postLikeRepository.findByPostIdAndUserId(postId, loginMember.getId());
+            if(star.isPresent()){
+                postLikeRepository.deleteByPostIdAndUserId(postId, loginMember.getId());
+                Post post = postRepository.findById(postId).get();
+                Integer likeCounts = post.getLikeCounts();
+                post.setLikeCounts(likeCounts - 1);
+                postRepository.save(post);
+            }
+        }
     }
 
     public List<Post> getUserPosts(Long userId){
@@ -165,5 +181,28 @@ public class PostService {
         Optional<PostLike> postLike = postLikeRepository.findByPostIdAndUserId(postId, loginMemberId);
         Boolean isLiked = postLike.isPresent();
         return new PostDto(post.get(), authorDTO, likeCount, isLiked, commentDtos);
+    }
+
+    public PostListDto search(String query, Pageable pageable) {
+        Page<Post> postPage = postRepository.findByTitleContainingOrContentContaining(query, query, pageable);
+        List<ContentDto> contentList = postPage.getContent().stream()
+                .map(post -> {
+                    int likeCount = postLikeRepository.countByPostId(post.getId());
+                    int commentCount = commentRepository.countByPostId(post.getId());
+                    Optional<Member> user = memberRepository.findById(post.getUserId());
+                    String nickname = user.map(Member::getNickname)
+                            .orElse(null);
+                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname);
+                    return ContentDto.fromEntity(post, likeCount, commentCount, authorDTO);
+                })
+                .collect(Collectors.toList());
+
+        return new PostListDto(
+                postPage.getTotalPages(),
+                (int) postPage.getTotalElements(),
+                postPage.getNumber(),
+                postPage.getSize(),
+                contentList
+        );
     }
 }

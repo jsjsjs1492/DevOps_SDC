@@ -7,6 +7,7 @@ import './LoginStyles.css';
 axios.defaults.withCredentials = true;
 
 const LoginComponent = () => {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
   const navigate = useNavigate();
   const [showLogin, setShowLogin] = useState(true);
   
@@ -25,9 +26,11 @@ const LoginComponent = () => {
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
   
   // Add state for alert
   const [alert, setAlert] = useState('');
+  
   
   // Add useEffect for alert auto-dismiss
   useEffect(() => {
@@ -84,6 +87,10 @@ const LoginComponent = () => {
   // Handle signup
   const handleSignup = async (e) => {
     e.preventDefault();
+    if (!passwordRegex.test(signupPassword)) {
+      setSignupError('비밀번호 조건을 확인해주세요.');
+      return;
+    }
     if (!isVerified) {
       setSignupError('이메일 인증이 필요합니다.');
       return;
@@ -228,14 +235,14 @@ const LoginComponent = () => {
             </div>
             <div className="login__box">
               <i className='bx bx-lock login__icon'></i>
-              <input 
-                type="password" 
-                placeholder="Password" 
-                className="login__input" 
-                value={InputPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required 
-              />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  className="login__input"
+                  value={InputPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  required
+                />
             </div>
             {loginError && <div className="login__error">{loginError}</div>}
             <a href="#" className="login__forgot">Forgot Password?</a>
@@ -324,25 +331,34 @@ const LoginComponent = () => {
               />
             </div>
             
-            {/* Password field and remaining form elements */}
             <div className="login__box">
               <i className='bx bx-lock login__icon'></i>
-              <input 
-                type="password" 
-                placeholder="Password" 
+              <input
+                type="password"
+                placeholder="Password"
                 className="login__input"
                 value={signupPassword}
-                onChange={(e) => setSignupPassword(e.target.value)}
-                required 
+                onChange={e => {
+                  const pw = e.target.value;
+                  setSignupPassword(pw);
+                  setIsPasswordValid(passwordRegex.test(pw));
+                }}
+                required
               />
             </div>
+            {/* 비밀번호 조건 불일치 시 경고 메시지 */}
+            {signupPassword && !isPasswordValid && (
+              <div className="login__error password-warning">
+                8~20자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요.
+              </div>
+            )}
             
             {signupError && <div className="login__error">{signupError}</div>}
             
             <button 
               type="submit" 
               className="login__button" 
-              disabled={!isVerified}
+              disabled={!isVerified || !isPasswordValid}
             >
               Sign Up
             </button>

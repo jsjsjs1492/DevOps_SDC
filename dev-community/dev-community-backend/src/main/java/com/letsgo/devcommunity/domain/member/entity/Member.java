@@ -6,6 +6,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
+import static com.letsgo.devcommunity.domain.member.constants.MemberErrorMessages.*;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -40,12 +44,29 @@ public class Member extends BaseEntity {
 
     public Follow follow(Member to) {
         if (this.equals(to)) {
-            throw new IllegalArgumentException("자기 자신을 팔로우할 수 없습니다.");
+            throw new IllegalArgumentException(CANNOT_FOLLOW_MYSELF);
         }
 
         return Follow.builder()
                 .fromMember(this)
                 .toMember(to)
                 .build();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Member member = (Member) o;
+        return Objects.equals(loginId, member.loginId) &&
+               Objects.equals(email, member.email) &&
+               Objects.equals(password, member.password) &&
+               Objects.equals(nickname, member.nickname);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(loginId, email, password, nickname);
     }
 }

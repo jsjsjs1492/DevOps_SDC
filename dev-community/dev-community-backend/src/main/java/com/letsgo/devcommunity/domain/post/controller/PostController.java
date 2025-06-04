@@ -5,6 +5,9 @@ import  com.letsgo.devcommunity.domain.post.entity.Comment;
 import com.letsgo.devcommunity.domain.post.entity.Post;
 import com.letsgo.devcommunity.domain.post.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,8 +54,6 @@ public class PostController {
         return postService.createComment(id, comment);
     }
 
-
-
     @PostMapping("/{postId}/like")
     public void createPostLike(@PathVariable("postId") Long id) {
         postService.createPostLike(id);
@@ -68,9 +69,14 @@ public class PostController {
     public List<Post> getUserPosts(@PathVariable("userId") Long userId) {
         return postService.getUserPosts(userId);
     }
+
     @GetMapping("/like/{userId}")
     public List<Post> getUserPostLike(@PathVariable("userId") Long userId) {
         return postService.getUserPostLike(userId);
     }
 
+    @GetMapping("/search")
+    public PostListDto search(@RequestParam String query, @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return postService.search(query, pageable);
+    }
 }
