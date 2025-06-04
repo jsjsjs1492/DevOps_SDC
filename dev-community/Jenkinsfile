@@ -24,11 +24,11 @@ pipeline {
     }
 
     // ================================================================
-    stage('2. React .env.production 생성 (프론트)') {
+    stage('2. React 테스트용 .env.production 생성 (프론트)') {
       steps {
         dir('dev-community/dev-community-frontend') {
           writeFile file: '.env.production', text: """
-REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
+REACT_APP_API_URL=http://backend:8081
 """
         }
       }
@@ -51,25 +51,68 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
       }
     }
 
+    stage('4. Test Containers Up') {
+      steps {
+        sh 'docker-compose -f docker-compose.test.yml up -d'
+      }
+    }
+
+    stage('5. 젠킨스 로컬에서 Cypress E2E Test') {
+      steps {
+        sh 'docker-compose -f docker-compose.test.yml run --exit-code-from cypress cypress'
+      }
+    }
+
+    stage('6. Test Containers Down') {
+      steps {
+        sh 'docker-compose -f docker-compose.test.yml down'
+      }
+    }
+
+    stage('7. React 배포용 .env.production 덮어쓰기기 (프론트)') {
+      steps {
+        dir('dev-community/dev-community-frontend') {
+          writeFile file: '.env.production', text: """
+REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
+"""
+        }
+      }
+    }
+
+    stage('8. 프론트 Docker 이미지 리리빌드 및 Push') {
+      steps {
+        script {
+          docker.withRegistry('', 'dockerhub-credential') {
+            // 프론트엔드 이미지 빌드
+            sh 'docker build -t ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest dev-community/dev-community-frontend'
+            // Docker Hub에 Push
+            sh 'docker push ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest'
+          }
+        }
+      }
+    }
+
+
     // ================================================================
-    stage('4. 리모트 서버에 Compose 파일 전송') {
+    stage('9. 리모트 서버에 Compose 파일 전송') {
       steps {
         sshagent(['admin']) {
           sh """
+        
             # 백엔드 서버에 디렉토리 생성 및 Compose 파일 복사
             ssh -o StrictHostKeyChecking=no ${BACKEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-            scp ./docker-compose.backend.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
+            scp ./dev-community/docker-compose.backend.yml ${BACKEND_SERVER}:/home/ubuntu/deploy/
 
             # 프론트엔드 서버에 디렉토리 생성 및 Compose 파일 복사
             ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} 'mkdir -p /home/ubuntu/deploy'
-            scp ./docker-compose.frontend.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
+            scp ./dev-community/docker-compose.frontend.yml ${FRONTEND_SERVER}:/home/ubuntu/deploy/
           """
         }
       }
     }
 
     // ================================================================
-    stage('5. 백엔드 및 DB 서버 기동 (SSH 내 export)') {
+    stage('10. 백엔드 및 DB 서버 기동 (SSH 내 export)') {
       steps {
         sshagent(['admin']) {
           
@@ -93,8 +136,8 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
                 ################################################################################
                 export MAIL_HOST="mail.sogang.ac.kr"
                 export MAIL_PORT="465"
-                export MAIL_USERNAME="jesjsjes"
-                export MAIL_PASSWORD="wndrnrwlq1492@"
+                export MAIL_USERNAME=""
+                export MAIL_PASSWORD=""
 
                 ################################################################################
                 # 3) Docker Compose: 기존 컨테이너 종료 → 최신 이미지 Pull → 신규 기동
@@ -110,61 +153,37 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
     }
 
     // ================================================================
-    stage('6. 프론트엔드 서버 기동') {
+    stage('11. 프론트 기동') {
       steps {
-        sshagent(['admin']) {
-          sh """
-            ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
-              cd /home/ubuntu/deploy &&
-
-              # (필요할 경우) 프론트 환경 변수 export
-              # 예: export REACT_APP_API_URL="http://${BACKEND_URL}:${BACKEND_PORT}"
-
-              export DOCKER_REGISTRY="jangcker"
-              export FRONTEND_IMAGE="dev-community-frontend"
-              
-
-              # Docker Compose: Pull → Up (orphan 제거 포함)
-              docker compose -f docker-compose.frontend.yml pull &&
-              docker compose -f docker-compose.frontend.yml up -d --remove-orphans
-            '
-          """
-        }
-      }
-    }
-
-    // ================================================================
-    stage('7. Cypress E2E 테스트 실행') {
-      steps {
-        // ❶ SSH 키만 붙여서 SSH 에이전트 실행
         sshagent(['admin']) {
           sh """
             ssh -o StrictHostKeyChecking=no ${FRONTEND_SERVER} '
               cd /home/ubuntu/deploy &&
 
               # ───────────────────────────────────────────────────────────────────────
-              # 1) 혹시 남아 있는 Cypress 또는 프론트 컨테이너가 있으면 모두 내린다.
+              # 1) 프론트엔드 Compose 내려놓기 (이미 켜져 있다면)
               # ───────────────────────────────────────────────────────────────────────
               docker compose -f docker-compose.frontend.yml down --remove-orphans || true
 
               # ───────────────────────────────────────────────────────────────────────
-              # 2) "frontend" 컨테이너만 올려둔다 (테스트를 위한 정적 파일 서빙 준비).
-              #    (미리 이미지는 pull 되어 있다고 가정)
+              # 2) DOCKER 레지스트리 및 이미지 이름 환경 변수 설정
               # ───────────────────────────────────────────────────────────────────────
-              docker compose -f docker-compose.frontend.yml up -d frontend
+              export DOCKER_REGISTRY="jangcker"
+              export FRONTEND_IMAGE="dev-community-frontend"
+              export FRONTEND_PORT="80"
 
               # ───────────────────────────────────────────────────────────────────────
-              # 3) Cypress 서비스만 실행 → 완료되면 exit code 반환
-              #    --exit-code-from 옵션을 주면, cypress 서비스가 종료될 때
-              #    자동으로 모든 서비스(frontend 포함)를 같이 내립니다.
+              # 3) 프론트엔드(nginx) 컨테이너 빌드된 최신 이미지로 기동
               # ───────────────────────────────────────────────────────────────────────
-              docker compose -f docker-compose.frontend.yml up --exit-code-from cypress cypress
+              docker compose -f docker-compose.frontend.yml pull
+              docker compose -f docker-compose.frontend.yml up -d frontend
+
+              
             '
           """
         }
       }
-    }
-  } // stages
+    }// stages
 
   // ================================================================
   post {
