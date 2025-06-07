@@ -46,9 +46,14 @@ services:
       - ./dev-community-frontend:/e2e
     depends_on:
       - frontend
-    command: ["npx", "cypress", "run", "--config", "baseUrl=http://frontend"]
+    command:
+      - cypress
+      - run
+      - --config
+      - "baseUrl=http://frontend"
     networks:
       - test-network
+
 
 networks:
   test-network:
