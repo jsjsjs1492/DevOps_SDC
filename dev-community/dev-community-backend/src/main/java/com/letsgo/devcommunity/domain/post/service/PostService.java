@@ -3,12 +3,8 @@ package com.letsgo.devcommunity.domain.post.service;
 import com.letsgo.devcommunity.domain.member.entity.Member;
 import com.letsgo.devcommunity.domain.member.repository.MemberRepository;
 import com.letsgo.devcommunity.domain.post.dto.*;
-import com.letsgo.devcommunity.domain.post.entity.Comment;
-import com.letsgo.devcommunity.domain.post.entity.Post;
-import com.letsgo.devcommunity.domain.post.entity.PostLike;
-import com.letsgo.devcommunity.domain.post.repository.PostRepository;
-import com.letsgo.devcommunity.domain.post.repository.PostLikeRepository;
-import com.letsgo.devcommunity.domain.post.repository.CommentRepository;
+import com.letsgo.devcommunity.domain.post.entity.*;
+import com.letsgo.devcommunity.domain.post.repository.*;
 
 import com.letsgo.devcommunity.global.util.SessionUtils;
 import jakarta.servlet.http.HttpSession;
@@ -20,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,14 +27,18 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final MemberRepository memberRepository;
+    private final TagRepository tagRepository;
+    private final TagPostMapRepository tagPostMapRepository;
     private final HttpSession httpSession;
 
     @Autowired
-    public PostService(PostRepository postRepository, CommentRepository commentRepository, PostLikeRepository postLikeRepository, MemberRepository memberRepository, HttpSession httpSession) {
+    public PostService(PostRepository postRepository, CommentRepository commentRepository, PostLikeRepository postLikeRepository, MemberRepository memberRepository, TagPostMapRepository tagPostMapRepository, TagRepository tagRepository, HttpSession httpSession) {
         this.postLikeRepository = postLikeRepository;
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.memberRepository = memberRepository;
+        this.tagRepository = tagRepository;
+        this.tagPostMapRepository = tagPostMapRepository;
         this.httpSession = httpSession;
     }
 
@@ -48,6 +49,18 @@ public class PostService {
         post.setContent(updateDto.getContent());
         post.setUserId(loginMember.getId());
         postRepository.save(post);
+
+        updateDto.getTags().forEach(tagName -> {
+            Optional<Tag> existingTag = tagRepository.findByTagName(tagName);
+            if (existingTag.isEmpty()) {
+                Tag newTag = new Tag(tagName);
+                tagRepository.save(newTag);
+            }
+            Optional<Tag> temp = tagRepository.findByTagName(tagName);
+            TagPostMap tagPostMap = new TagPostMap(temp.get().getTagId(), post.getId());
+            tagPostMapRepository.save(tagPostMap);
+        });
+
         return new CreateResponseDto(post.getId(), post.getCreatedAt());
     }
 
@@ -203,6 +216,47 @@ public class PostService {
                 postPage.getNumber(),
                 postPage.getSize(),
                 contentList
+        );
+    }
+
+    public PostListDto tagSearch(String query, Pageable pageable){
+        final var tag = tagRepository.findByTagName(query);
+        if (tag.isEmpty()) {
+            throw new IllegalArgumentException("tag not found");
+        }
+
+        final var tagPostMapList = tagPostMapRepository.findAllByTagId(tag.get().getTagId());
+
+        List<Long> postIds = tagPostMapList.stream()
+                .map(TagPostMap::getPostId)
+                .collect(Collectors.toList());
+
+        if (postIds.isEmpty()) {
+            return new PostListDto(0, 0, pageable.getPageNumber(), pageable.getPageSize(), Collections.emptyList());
+        }
+
+        Page<Post> postPage = postRepository.findByIdIn(postIds, pageable);
+
+        List<ContentDto> contentDtos = postPage.getContent().stream()
+                .map(post -> {
+                    // 여기서 각각의 post에 대해 추가 정보 조회
+                    int likeCount = postLikeRepository.countByPostId(post.getId());
+                    int commentCount = commentRepository.countByPostId(post.getId());
+                    Optional<Member> user = memberRepository.findById(post.getUserId());
+                    String nickname = user.map(Member::getNickname)
+                            .orElse(null);
+                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname);
+
+                    return ContentDto.fromEntity(post, likeCount, commentCount, authorDTO);
+                })
+                .collect(Collectors.toList());
+
+        return new PostListDto(
+                postPage.getTotalPages(),
+                (int) postPage.getTotalElements(),
+                postPage.getNumber(),
+                postPage.getSize(),
+                contentDtos
         );
     }
 }

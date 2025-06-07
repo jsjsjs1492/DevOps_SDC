@@ -79,4 +79,8 @@ public class PostController {
     public PostListDto search(@RequestParam String query, @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return postService.search(query, pageable);
     }
+    @GetMapping("/tag/search")
+    public PostListDto tagSearch(@RequestParam String query, @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return postService.tagSearch(query, pageable);
+    }
 }

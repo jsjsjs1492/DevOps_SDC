@@ -3,6 +3,8 @@ package com.letsgo.devcommunity.domain.member.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -11,6 +13,7 @@ import java.util.Objects;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Follow {
 
     @Id
@@ -25,7 +28,8 @@ public class Follow {
     @JoinColumn(name = "to_member_id", nullable = false)
     private Member toMember;
 
-    @CreationTimestamp
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Builder

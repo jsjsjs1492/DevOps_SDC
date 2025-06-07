@@ -5,15 +5,23 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static com.letsgo.devcommunity.domain.member.constants.MemberErrorMessages.*;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member extends BaseEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class Member implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +41,14 @@ public class Member extends BaseEntity {
 
     @Column(name = "profile_image_url")
     private String profileImageUrl;
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     public Member(String loginId, String email, String password, String nickname, String profileImageUrl) {
         this.loginId = loginId;

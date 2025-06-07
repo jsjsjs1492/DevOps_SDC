@@ -1,7 +1,11 @@
+// src/components/PostDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './PostDetailStyles.css';
+
+// Markdown 렌더링용 라이브러리 추가
+import ReactMarkdown from 'react-markdown';
 
 const PostDetail = () => {
   const { id: postId } = useParams(); // Rename to postId for clarity
@@ -34,28 +38,6 @@ const PostDetail = () => {
         setLoading(false);
       } catch (error) {
         console.error('게시글 상세 정보 로딩 실패:', error);
-        // 더미 데이터 사용
-        /*setPost({
-          id: parseInt(postId),
-          title: "React 상태관리의 모든 것",
-          content: "React에서 상태관리를 효율적으로 하는 방법을 알아봅시다...",
-          author: {
-            id: "user1",
-            nickname: "개발왕",
-            profileImageUrl: null
-          },
-          likeCount: 150,
-          isLiked: false,
-          createdAt: "2024-01-15T09:00:00",
-          comments: [
-            {
-              id: 1,
-              content: "좋은 글이네요!",
-              author: "리액트러버",
-              createdAt: "2024-01-15T10:00:00"
-            }
-          ]
-        });*/
         setLoading(false);
       }
     };
@@ -291,7 +273,11 @@ const PostDetail = () => {
           <i className="bx bx-arrow-back"></i>
         </button>
         <div className="logo-container" onClick={() => navigate("/main")}>
-          <img src="https://cdn-icons-png.flaticon.com/512/2721/2721620.png" alt="Logo" className="logo-img" />
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/2721/2721620.png"
+            alt="Logo"
+            className="logo-img"
+          />
           <h1>SDC</h1>
         </div>
       </header>
@@ -311,7 +297,8 @@ const PostDetail = () => {
 
         <main>
           <div className="post-content">
-            <p>{post.content}</p>
+            {/* 기존 <p>{post.content}</p> → Markdown 렌더링으로 변경 */}
+            <ReactMarkdown>{post.content}</ReactMarkdown>
           </div>
           
           <div className="post-likes">
