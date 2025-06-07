@@ -34,6 +34,14 @@ services:
     networks:
       - dev-network
 
+  redis:
+    image: redis:6.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - dev-network
+
 networks:
   dev-network:
     driver: bridge
