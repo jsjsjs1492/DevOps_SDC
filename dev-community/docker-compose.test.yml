@@ -46,11 +46,9 @@ services:
       - ./dev-community-frontend:/e2e
     depends_on:
       - frontend
-    command:
-      - cypress
-      - run
-      - --config
-      - "baseUrl=http://frontend"
+    environment:
+      CYPRESS_BASE_URL: http://frontend
+    command: ["cypress", "run"]
     networks:
       - test-network
 

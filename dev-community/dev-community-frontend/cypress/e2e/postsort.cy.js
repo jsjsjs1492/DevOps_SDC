@@ -3,7 +3,7 @@ describe('마이페이지 게시글 테스트', () => {
   /* ---------- 공통: 로그인 후 /main 진입 ---------- */
   beforeEach(() => {
     // 1) 로그인 페이지
-    cy.visit('http://localhost:3000/');
+    cy.visit('/');
 
     cy.get('form#login-in').within(() => {
       cy.get('input[placeholder="ID"]').type('cypress');

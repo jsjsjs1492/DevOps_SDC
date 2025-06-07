@@ -8,7 +8,7 @@ describe('게시글 전 과정 – 원샷(한 it) 시나리오', () => {
 
   it('새 글 작성 → 추천 → 댓글 작성/삭제 → 수정 → 삭제', () => {
     /* ---------- 로그인 ---------- */
-    cy.visit('http://localhost:3000/');
+    cy.visit('/');
     cy.get('form#login-in').within(() => {
       cy.get('input[placeholder="ID"]').type('cypress');
       cy.get('input[placeholder="Password"]').type('cypress');

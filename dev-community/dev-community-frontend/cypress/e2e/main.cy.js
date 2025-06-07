@@ -3,7 +3,7 @@ describe('/main 페이지 테스트', () => {
 
   /* ---------------- 공통 로그인 ---------------- */
   beforeEach(() => {
-    cy.visit('http://localhost:3000/');
+    cy.visit('/');
 
     cy.get('form#login-in').within(() => {
       cy.get('input[placeholder="ID"]').type(testUser.loginId);

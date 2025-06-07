@@ -1,6 +1,10 @@
+before(() => {
+  console.log('🔥 Cypress baseUrl:', Cypress.config('baseUrl'));
+});
+
 describe('로그인 테스트', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:3000/')
+    cy.visit('/')
   })
 
   it('성공: cypress 계정 로그인 → /main 이동', () => {
