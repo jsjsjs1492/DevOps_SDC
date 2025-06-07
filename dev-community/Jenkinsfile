@@ -38,8 +38,8 @@ pipeline {
                 ################################################################################
                 export MAIL_HOST="mail.sogang.ac.kr"
                 export MAIL_PORT="465"
-                export MAIL_USERNAME=""
-                export MAIL_PASSWORD=""
+                export MAIL_USERNAME="jesjsjes@sogang.ac.kr"
+                export MAIL_PASSWORD="wndrnrwlq1492@"
 
                 ################################################################################
                 # 3) Docker Compose: 기존 컨테이너 종료 
@@ -117,22 +117,22 @@ REACT_APP_API_URL=http://backend:8081
       }
     }
 
-    stage('4. Test Containers Up') {
+    stage('4-5. 젠킨스 로컬에서 Cypress E2E Test') {
       steps {
         dir('dev-community/'){
           sh '''
+            ################################################################################
+            # 2) Mail 서버 환경 변수 export
+            ################################################################################
+            export MAIL_HOST="mail.sogang.ac.kr"
+            export MAIL_PORT="465"
+            export MAIL_USERNAME="jesjsjes@sogang.ac.kr"
+            export MAIL_PASSWORD="wndrnrwlq1492@"
 
             echo "🚀 테스트 컨테이너 기동"
-            docker-compose -f docker-compose.test.yml up -d
+            
+            docker compose -f docker-compose.test.yml up --exit-code-from cypress
           '''
-        }
-      }
-    }
-
-    stage('5. 젠킨스 로컬에서 Cypress E2E Test') {
-      steps {
-        dir('dev-community/'){
-          sh 'docker-compose -f docker-compose.test.yml run --exit-code-from cypress cypress'
         }
       }
     }
@@ -140,7 +140,7 @@ REACT_APP_API_URL=http://backend:8081
     stage('6. Test Containers Down') {
       steps {
         dir('dev-community/'){
-          sh 'docker-compose -f docker-compose.test.yml down'
+          sh 'docker compose -f docker-compose.test.yml down'
           sh 'docker system prune -f'
           sh 'docker volume prune -f'
         }
@@ -214,8 +214,8 @@ REACT_APP_API_URL=http://${BACKEND_URL}:${BACKEND_PORT}
                 ################################################################################
                 export MAIL_HOST="mail.sogang.ac.kr"
                 export MAIL_PORT="465"
-                export MAIL_USERNAME=""
-                export MAIL_PASSWORD=""
+                export MAIL_USERNAME="jesjsjes@sogang.ac.kr"
+                export MAIL_PASSWORD="wndrnrwlq1492@"
 
                 ################################################################################
                 # 3) Docker Compose: 기존 컨테이너 종료 → 최신 이미지 Pull → 신규 기동
