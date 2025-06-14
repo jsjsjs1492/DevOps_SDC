@@ -45,8 +45,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       # application-prod.properties에 직접 설정했으므로 여기서 다시 설정할 필요는 없지만,
       # 명시적으로 주입하려면 여기에 추가 (JENKINSFILE에서 export된 변수들이 들어옴)
-      # server.servlet.session.cookie.same-site=Lax # 또는 제거
-      # server.servlet.session.cookie.secure=false
+ 
     volumes:
       - ./backend-logs:/app/logs
     depends_on:
