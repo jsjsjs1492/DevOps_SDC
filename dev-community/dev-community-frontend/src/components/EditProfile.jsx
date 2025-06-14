@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './EditProfileStyles.css';
+axios.defaults.withCredentials = true;
 
 const EditProfile = () => {
     const [userInfo, setUserInfo] = useState(null);
@@ -88,7 +89,7 @@ const EditProfile = () => {
                         headers: {
                             'Content-Type': 'multipart/form-data'
                         }
-                    });
+                    },{ withCredentials: true });
 
                     const newImageUrl = response.data.profileImageUrl;
 
@@ -113,7 +114,9 @@ const EditProfile = () => {
     // 프로필 이미지 삭제 (기본 이미지로 재설정)
     const handleRemoveProfileImage = async () => {
         try {
-            const response = await axios.delete('/member/me/profile-image');
+            const response = await axios.delete('/member/me/profile-image',{
+            withCredentials: true 
+            });
 
             const defaultImageUrl = response.data.profileImageUrl; // API 명세에 따라 기본 이미지 URL 반환
             
@@ -142,8 +145,9 @@ const EditProfile = () => {
         }
 
         try {
-            const response = await axios.put('/member/me/nickname', { nickname: newNickname });
-
+            const response = await axios.put('/member/me/nickname', { nickname: newNickname },{
+            withCredentials: true 
+            });
             const updatedNickname = response.data.nickname;
 
             setUserInfo(prevInfo => ({
@@ -204,6 +208,8 @@ const EditProfile = () => {
             await axios.put('/member/me/password', {
                 currentPassword,
                 newPassword
+            },{
+            withCredentials: true 
             });
 
             setCurrentPassword('');

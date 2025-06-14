@@ -8,6 +8,8 @@ import './TagStyles.css'; // 태그 스타일 추가
 // Markdown 렌더링용 라이브러리 추가
 import ReactMarkdown from 'react-markdown';
 
+axios.defaults.withCredentials = true;
+
 const PostDetail = () => {
   const { id: postId } = useParams(); // Rename to postId for clarity
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ const PostDetail = () => {
     if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
       try {
         // 수정된 API 엔드포인트 사용
-        await axios.delete(`/post/${postId}`, { withCredentials: true });
+        await axios.delete(`/post/${postId}`);
         // 삭제 성공 시 메인 페이지로 이동
         navigate('/main');
       } catch (error) {
@@ -91,7 +93,7 @@ const PostDetail = () => {
       // 이미 좋아요를 눌렀는지 확인
       if (post.isLiked) {
         // 좋아요 취소 로직
-        await axios.delete(`/post/${postId}/like`, { withCredentials: true });
+        await axios.delete(`/post/${postId}/like`);
         setPost(prev => ({
           ...prev,
           likeCount: prev.likeCount - 1,
@@ -99,7 +101,7 @@ const PostDetail = () => {
         }));
       } else {
         // 좋아요 추가
-        await axios.post(`/post/${postId}/like`, { withCredentials: true });
+        await axios.post(`/post/${postId}/like`);
         setPost(prev => ({
           ...prev,
           likeCount: prev.likeCount + 1,
@@ -138,7 +140,7 @@ const PostDetail = () => {
       // 댓글 작성 API 호출 - 경로는 동일하지만 응답 처리 방식 업데이트
       const response = await axios.post(`/post/${postId}/comment`, {
         content: newComment
-      }, { withCredentials: true });
+      });
       
       // 새 댓글 객체 생성
       const newCommentObj = {
@@ -186,7 +188,7 @@ const PostDetail = () => {
     
     try {
       // 댓글 삭제 API 호출 - 새로운 엔드포인트 사용
-      await axios.delete(`/comment/${commentId}`, { withCredentials: true });
+      await axios.delete(`/comment/${commentId}`);
       
       // 댓글 목록에서 삭제된 댓글 제거
       setPost(prev => ({

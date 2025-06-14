@@ -5,34 +5,7 @@ import './MainPageStyles.css';
 import './TagStyles.css'; // 태그 스타일 추가
 import tags from '../data/tags'; // 태그 목록 import
 
-// 더미 데이터 정의
-/*const dummyPosts = [
-  {
-    id: 1,
-    title: "React 상태관리의 모든 것",
-    content: "React에서 상태관리를 효율적으로 하는 방법을 알아봅시다...",
-    author: {
-      id: "user1",
-      nickname: "개발왕"
-    },
-    recommendCount: 100,
-    createdAt: "2024-01-15T09:00:00",
-    comments: []
-  },
-  {
-    id: 2,
-    title: "Spring Boot 시작하기",
-    content: "Spring Boot로 백엔드 개발을 시작해봅시다...",
-    author: {
-      id: "user2",
-      nickname: "백엔드개발자"
-    },
-    recommendCount: 120,
-    createdAt: "2024-01-14T15:30:00",
-    comments: []
-  },
-  // ... 더 많은 더미 게시글 추가 가능
-];*/
+axios.defaults.withCredentials = true;
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -110,7 +83,7 @@ const MainPage = () => {
   // 로그아웃 처리 함수
   const handleLogout = async () => {
     try {
-      await axios.post('/auth/logout',{withCredentials: true });
+      await axios.post('/auth/logout');
       localStorage.removeItem('user');
       navigate('/');
     } catch (error) {

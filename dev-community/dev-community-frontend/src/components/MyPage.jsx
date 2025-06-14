@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './MyPageStyles.css';
 import FollowModal from './FollowModal';
+axios.defaults.withCredentials = true;
 
 const MyPage = () => {
   const [userInfo, setUserInfo] = useState(null);

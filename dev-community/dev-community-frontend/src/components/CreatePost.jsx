@@ -6,6 +6,7 @@ import axios from 'axios';
 import './CreatePostStyles.css';
 import './TagStyles.css'; // 태그 스타일 추가
 import tags from '../data/tags'; // 태그 목록 import
+axios.defaults.withCredentials = true;
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ const CreatePost = () => {
         title,
         content,
         tags: selectedTags
-      },{withCredentials: true });
+      });
       
       // 작성 성공 시 해당 게시글 상세 페이지로 이동
       navigate(`/post/${response.data.id}`);
