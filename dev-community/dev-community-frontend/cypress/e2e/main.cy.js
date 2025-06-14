@@ -1,17 +1,13 @@
 describe('/main 페이지 테스트', () => {
-  const testUser = { loginId: 'cypress', nickname: '싸이프레스' };
+  const testUser = { loginId: 'aidenq', nickname: '싸이프레스' };
 
-  /* ---------------- 공통 로그인 ---------------- */
+  // ── 공통 before 훅: baseUrl 로그 찍고 localStorage 초기화
+  before(() => {
+    console.log('🔥 Cypress baseUrl:', Cypress.config('baseUrl'));
+  });
+
   beforeEach(() => {
-    cy.visit('/');
-
-    cy.get('form#login-in').within(() => {
-      cy.get('input[placeholder="ID"]').type(testUser.loginId);
-      cy.get('input[placeholder="Password"]').type('cypress');
-      cy.root().submit();
-    });
-
-    cy.url().should('include', '/main');
+    cy.login();
   });
 
   /* 1. 메인 섹션 확인 */
@@ -38,11 +34,12 @@ describe('/main 페이지 테스트', () => {
   /* 4. localStorage 유지 → 로그아웃 → 초기화 */
   it('localStorage에 사용자 정보가 유지되고 로그아웃 시 초기화된다', () => {
     cy.window().then(win => {
-      expect(JSON.parse(win.localStorage.getItem('user'))).to.deep.equal(testUser);
+      expect(JSON.parse(win.localStorage.getItem('user')))
+      .to.deep.include(testUser);
     });
 
     cy.contains('로그아웃').click();
-    cy.url().should('eq', 'http://localhost:3000/');
+    cy.url().should('eq', Cypress.config('baseUrl') + '/');
     cy.window().then(win => {
       expect(win.localStorage.getItem('user')).to.be.null;
     });

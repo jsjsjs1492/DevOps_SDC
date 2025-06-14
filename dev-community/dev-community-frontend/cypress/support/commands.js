@@ -23,3 +23,14 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('login', ({ id = 'aidenq', pw = 'Rightpass1!' } = {}) => {
+  cy.clearLocalStorage();
+  cy.visit('/');
+  cy.get('form#login-in').within(() => {
+    cy.get('input[placeholder="ID"]').type(id);
+    cy.get('input[placeholder="Password"]').type(pw);
+    cy.get('button[type="submit"]').click();
+  });
+  cy.url().should('include', '/main');
+});

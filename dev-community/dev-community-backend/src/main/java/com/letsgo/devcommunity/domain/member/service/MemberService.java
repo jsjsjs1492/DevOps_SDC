@@ -31,7 +31,7 @@ public class MemberService {
     private final FollowRepository followRepository;
     private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
-//    private final PostLikeRepository postLikeRepository;
+    private final PostLikeRepository postLikeRepository;
 
     @Transactional
     public MemberProfileResponse getProfile(String loginId) {
@@ -39,8 +39,7 @@ public class MemberService {
                 .orElseThrow(() -> new IllegalArgumentException(NOT_FOUND_MEMBER));
         int followerCount = followRepository.countByToMember(member);
         int followingCount = followRepository.countByFromMember(member);
-//        int receivedLikeCount = postLikeRepository.calculateTotalLikesByUserId(member.getId());
-        int receivedLikeCount = 0;
+        long receivedLikeCount = postLikeRepository.countLikesReceivedByMember(member.getId());
 
         return new MemberProfileResponse(
                 member.getNickname(),

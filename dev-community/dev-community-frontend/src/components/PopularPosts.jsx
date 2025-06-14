@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './PostsPage.css';
-// axios.defaults.withCredentials = true;
 
 const PopularPosts = () => {
   const navigate = useNavigate();
@@ -75,7 +74,7 @@ const PopularPosts = () => {
     <div className="posts-page">
       {/* 헤더: 뒤로가기 + 제목 */}
       <header className="posts-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
+        <button className="back-btn" onClick={() => navigate('/main')}>
           <i className="bx bx-arrow-back"></i>
         </button>
         <h1>인기 게시글</h1>

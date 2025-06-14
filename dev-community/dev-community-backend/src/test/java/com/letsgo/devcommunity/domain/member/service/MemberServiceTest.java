@@ -1,11 +1,13 @@
 package com.letsgo.devcommunity.domain.member.service;
 
 import com.letsgo.devcommunity.domain.member.dto.FollowMemberResponse;
+import com.letsgo.devcommunity.domain.member.dto.MemberProfileResponse;
 import com.letsgo.devcommunity.domain.member.dto.PasswordUpdateRequestDto;
 import com.letsgo.devcommunity.domain.member.entity.Follow;
 import com.letsgo.devcommunity.domain.member.entity.Member;
 import com.letsgo.devcommunity.domain.member.repository.FollowRepository;
 import com.letsgo.devcommunity.domain.member.repository.MemberRepository;
+import com.letsgo.devcommunity.domain.post.repository.PostLikeRepository;
 import com.letsgo.devcommunity.global.common.FileStorageService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -44,12 +46,67 @@ class MemberServiceTest {
     private FileStorageService fileStorageService;
 
     @Mock
-    private PasswordEncoder passwordEncoder; // PasswordEncoder Mock 객체 추가
+    private PostLikeRepository postLikeRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private MemberService memberService;
 
-    // TODO: 프로필 조회 기능 구현 (본인이 받은 총 추천 수 기능) 후 테스트 추가 예정
+    @Test
+    @DisplayName("프로필 조회 성공")
+    void getProfile_Success() {
+        // given
+        Member member = TestDataFactory.createDefaultMember();
+        String loginId = member.getLoginId();
+        int followerCount = 10;
+        int followingCount = 5;
+        long receivedLikeCount = 20L;
+
+        when(memberRepository.findByLoginId(loginId)).thenReturn(Optional.of(member));
+        when(followRepository.countByToMember(member)).thenReturn(followerCount);
+        when(followRepository.countByFromMember(member)).thenReturn(followingCount);
+        when(postLikeRepository.countLikesReceivedByMember(member.getId())).thenReturn(receivedLikeCount);
+
+        // when
+        MemberProfileResponse profileResponse = memberService.getProfile(loginId);
+
+        // then
+        assertThat(profileResponse).isNotNull();
+        assertThat(profileResponse.nickname()).isEqualTo(member.getNickname());
+        assertThat(profileResponse.profileImageUrl()).isEqualTo(member.getProfileImageUrl());
+        assertThat(profileResponse.followerCount()).isEqualTo(followerCount);
+        assertThat(profileResponse.followingCount()).isEqualTo(followingCount);
+        assertThat(profileResponse.receivedLikeCount()).isEqualTo(receivedLikeCount);
+
+        verify(memberRepository).findByLoginId(loginId);
+        verify(followRepository).countByToMember(member);
+        verify(followRepository).countByFromMember(member);
+        verify(postLikeRepository).countLikesReceivedByMember(member.getId());
+    }
+
+    @Test
+    @DisplayName("프로필 조회 실패: 사용자를 찾을 수 없음")
+    void getProfile_Failure_MemberNotFound() {
+        // given
+        String loginId = "nonExistentUser";
+        when(memberRepository.findByLoginId(loginId)).thenReturn(Optional.empty());
+
+        // when
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> memberService.getProfile(loginId)
+        );
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo(NOT_FOUND_MEMBER);
+        verify(memberRepository).findByLoginId(loginId);
+        verify(followRepository, never()).countByToMember(any(Member.class));
+        verify(followRepository, never()).countByFromMember(any(Member.class));
+        verify(postLikeRepository, never()).countLikesReceivedByMember(anyLong());
+    }
+
 
     @Test
     @DisplayName("팔로우 성공")

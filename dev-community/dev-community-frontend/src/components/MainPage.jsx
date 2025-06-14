@@ -5,7 +5,6 @@ import './MainPageStyles.css';
 import './TagStyles.css'; // 태그 스타일 추가
 import tags from '../data/tags'; // 태그 목록 import
 
-// axios.defaults.withCredentials = true;
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -18,15 +17,20 @@ const MainPage = () => {
 
   // 데이터 가져오기
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
+    const fetchUser = async () => {
+      // 로컬스토리지에서 loginId 가져오기
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
+      const user = JSON.parse(userStr);
       try {
-        const parsedUser = JSON.parse(user);
-        setNickname(parsedUser.nickname);
+        // loginId 기반으로 사용자 정보 조회
+        const response = await axios.get(`/member/${user.loginId}`);
+        setNickname(response.data.nickname);
       } catch (e) {
-        console.error('유저 정보 파싱 실패', e);
+        console.error('유저 정보 로딩 실패', e);
       }
-    }
+    };
+    fetchUser();
 
     const fetchPosts = async () => {
       try {
@@ -40,7 +44,7 @@ const MainPage = () => {
               page: 0,
               size: 8,
               // sort: 'recommendCount,desc'
-              //  sort: 'likeCount,desc'
+              //  sort: 'likeCount,desc'
             }
           });
           // 프론트에서 likeCount 기준으로 정렬
@@ -64,9 +68,9 @@ const MainPage = () => {
           console.error('서버 연결 실패, 더미 데이터 사용:', error);
           // 서버 연결 실패 시 더미 데이터 사용
           /* setPopularPosts(dummyPosts.sort((a, b) => b.recommendCount - a.recommendCount));
-          setAllPosts(dummyPosts.sort((a, b) => 
-            new Date(b.createdAt) - new Date(a.createdAt)
-          ));*/
+           setAllPosts(dummyPosts.sort((a, b) => 
+             new Date(b.createdAt) - new Date(a.createdAt)
+           ));*/
         }
 
         setLoading(false);
@@ -99,7 +103,7 @@ const MainPage = () => {
   };
 
   const handlePostClick = (id) => {
-    navigate(`/post/${id}`);  // 이 부분이 제대로 동작하는지 확인
+    navigate(`/post/${id}`);  // 이 부분이 제대로 동작하는지 확인
   };
 
   return (
@@ -264,8 +268,8 @@ const MainPage = () => {
               </div>
             </section>
             
-            
-            <div className="sidebar-section">
+            {/* 이 아래에 있던 중복 태그 섹션을 제거했습니다. */}
+            {/* <div className="sidebar-section">
               <h3>태그</h3>
               <div className="tag-cloud">
                 {tags.map((tag) => (
@@ -279,6 +283,7 @@ const MainPage = () => {
                 ))}
               </div>
             </div>
+            */}
           </div>
         )}
 

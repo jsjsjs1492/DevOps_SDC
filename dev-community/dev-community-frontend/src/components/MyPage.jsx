@@ -5,7 +5,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './MyPageStyles.css';
 import FollowModal from './FollowModal';
-// axios.defaults.withCredentials = true;
 
 const MyPage = () => {
   const [userInfo, setUserInfo] = useState(null);
@@ -189,7 +188,7 @@ const MyPage = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <div className="loading">로딩 중...</div>;
   }
 
   if (error) {
@@ -228,26 +227,26 @@ const MyPage = () => {
             <div className="profile-stats">
               <div className="stat">
                 <span className="stat-count">{myPosts?.length || 0}</span>
-                <span className="stat-label">Posts</span>
+                <span className="stat-label">게시글</span>
               </div>
               <div className="stat clickable" onClick={openFollowersModal}>
                 <span className="stat-count">{userInfo.followerCount || 0}</span>
-                <span className="stat-label">Followers</span>
+                <span className="stat-label">팔로워</span>
               </div>
               <div className="stat clickable" onClick={openFollowingModal}>
                 <span className="stat-count">{userInfo.followingCount || 0}</span>
-                <span className="stat-label">Following</span>
+                <span className="stat-label">팔로잉</span>
               </div>
               <div className="stat">
                 <span className="stat-count">{userInfo.receivedLikeCount || 0}</span>
-                <span className="stat-label">Likes</span>
+                <span className="stat-label">받은 좋아요</span>
               </div>
             </div>
             <div className="profile-bio">
               <h2 className="nickname">{userInfo.nickname}</h2>
               <p className="bio-text">Welcome to my profile!</p>
             </div>
-            <button className="edit-profile-btn" onClick={handleEditProfile}>Edit Profile</button>
+            <button className="edit-profile-btn" onClick={handleEditProfile}>프로필 수정</button>
           </div>
         </div>
       </div>
@@ -283,12 +282,9 @@ const MyPage = () => {
                   <div className="post-stats">
                     <div className="post-likes">
                       <i className="bx bx-like"></i>
-                      <span>{post.likeCount || 0}</span>
+                      <span>{post.likeCounts || 0}</span> {/* likeCounts로 변경 */}
                     </div>
-                    <div className="post-comments">
-                      <i className="bx bx-comment"></i>
-                      <span>{post.commentCount || 0}</span>
-                    </div>
+                    {/* 댓글 수 표시 부분 제거 */}
                   </div>
                 </div>
               ))
@@ -316,12 +312,9 @@ const MyPage = () => {
                   <div className="post-stats">
                     <div className="post-likes">
                       <i className="bx bx-like"></i>
-                      <span>{post.likeCount || 0}</span>
+                      <span>{post.likeCounts || 0}</span> {/* likeCounts로 변경 */}
                     </div>
-                    <div className="post-comments">
-                      <i className="bx bx-comment"></i>
-                      <span>{post.commentCount || 0}</span>
-                    </div>
+                    {/* 댓글 수 표시 부분 제거 */}
                   </div>
                 </div>
               ))

@@ -1,4 +1,3 @@
-#dockerfile for dev-community-backend
 # ===== 1단계: 빌드 환경 (Gradle을 사용해 JAR 생성) =====
 FROM gradle:8.5.0-jdk21 AS builder
 # 작업 디렉토리 설정

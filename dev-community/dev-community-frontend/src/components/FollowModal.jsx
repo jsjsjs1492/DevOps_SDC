@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './FollowModalStyles.css';
-// axios.defaults.withCredentials = true;
 
 const FollowModal = ({ type, users, onClose, currentUserId }) => {
   // 각 사용자의 팔로우 상태를 관리하는 상태

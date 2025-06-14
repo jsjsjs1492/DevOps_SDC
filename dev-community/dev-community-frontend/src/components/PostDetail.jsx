@@ -8,8 +8,6 @@ import './TagStyles.css'; // 태그 스타일 추가
 // Markdown 렌더링용 라이브러리 추가
 import ReactMarkdown from 'react-markdown';
 
-// axios.defaults.withCredentials = true;
-
 const PostDetail = () => {
   const { id: postId } = useParams(); // Rename to postId for clarity
   const navigate = useNavigate();

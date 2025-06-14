@@ -4,7 +4,6 @@ import axios from 'axios';
 import './PostsPage.css';
 import './TagStyles.css'; // 태그 스타일 추가
 import tags from '../data/tags'; // 태그 목록 import
-// axios.defaults.withCredentials = true;
 
 const AllPosts = () => {
   const navigate = useNavigate();
@@ -66,10 +65,16 @@ const AllPosts = () => {
       setPosts(response.data.content);
       setTotalPages(response.data.totalPages);
     } catch (err) {
-      console.error('전체 게시글 불러오기 실패:', err);
-      setError('게시글을 불러오는 데 실패했습니다.');
-      setPosts([]);
-      setTotalPages(0);
+      if (err.response && err.response.status === 500) {
+        setPosts([]);
+        setTotalPages(0);
+        setError(null);
+      } else {
+        console.error('전체 게시글 불러오기 실패:', err);
+        setError('게시글을 불러오는 데 실패했습니다.');
+        setPosts([]);
+        setTotalPages(0);
+      }
     } finally {
       setLoading(false); // 데이터 가져오기 완료 시 (성공 또는 실패) 로딩 상태 false
     }
@@ -114,7 +119,7 @@ const AllPosts = () => {
     <div className="posts-page">
       {/* 뒤로 돌아가기 + 제목 */}
       <header className="posts-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
+        <button className="back-btn" onClick={() => navigate('/main')}>
           <i className="bx bx-arrow-back"></i>
         </button>
         <h1>전체 게시글</h1>

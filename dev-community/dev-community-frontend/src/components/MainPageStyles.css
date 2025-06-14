@@ -23,6 +23,7 @@
 .logo-container {
   display: flex;
   align-items: center;
+  margin-left: 20px;
 }
 
 .logo-img {
@@ -41,6 +42,7 @@
 .header-right {
   display: flex;
   gap: 1rem;
+  margin-right: 20px;
 }
 
 /* 마이페이지 버튼 스타일 */

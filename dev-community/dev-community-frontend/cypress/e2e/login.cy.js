@@ -9,8 +9,8 @@ describe('로그인 테스트', () => {
 
   it('성공: cypress 계정 로그인 → /main 이동', () => {
     cy.get('form#login-in').within(() => {
-      cy.get('input[placeholder="ID"]').type('cypress')
-      cy.get('input[placeholder="Password"]').type('cypress')
+      cy.get('input[placeholder="ID"]').type('aidenq')
+      cy.get('input[placeholder="Password"]').type('Rightpass1!')
       cy.get('button[type="submit"]').click()
     })
 
@@ -19,7 +19,7 @@ describe('로그인 테스트', () => {
 
   it('실패: 잘못된 비밀번호 → 에러 메시지 표시', () => {
     cy.get('form#login-in').within(() => {
-      cy.get('input[placeholder="ID"]').type('cypress')
+      cy.get('input[placeholder="ID"]').type('aidenq')
       cy.get('input[placeholder="Password"]').type('wrongpass')
       cy.get('button[type="submit"]').click()
     })

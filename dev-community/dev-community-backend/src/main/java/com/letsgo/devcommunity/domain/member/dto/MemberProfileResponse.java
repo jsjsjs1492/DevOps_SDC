@@ -5,5 +5,5 @@ public record MemberProfileResponse(
         String profileImageUrl,
         int followerCount,
         int followingCount,
-        int receivedLikeCount
+        long receivedLikeCount
 ) { }

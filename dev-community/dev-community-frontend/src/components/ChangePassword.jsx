@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './ChangePasswordStyles.css';
-// axios.defaults.withCredentials = true;
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState('');

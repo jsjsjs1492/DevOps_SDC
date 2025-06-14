@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './LoginStyles.css';
 
-// axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true;
 
 const LoginComponent = () => {
   const passwordRegex = /^(?=.*[a-z])(?=(?:.*[A-Z]){1,})(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
