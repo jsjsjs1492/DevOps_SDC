@@ -3,7 +3,7 @@ FROM node:20 as builder
 WORKDIR /app
 COPY . .
 RUN cp .env.production .env
-RUN npm install && npm run build
+RUN npm install --legacy-peer-deps && npm run build
 
 # ----------- 2단계: Nginx로 정적 파일 서빙(Stage 2) -----------
 FROM nginx:alpine
