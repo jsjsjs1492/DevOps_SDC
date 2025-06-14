@@ -18,8 +18,9 @@ public class PostDto {
     private Integer likeCount;
     private Boolean isLiked;
     private List<CommentDto> comments;
+    private List<String> tags;
 
-    public PostDto(Post post, AuthorDTO author, Integer likeCount, Boolean isLiked, List<CommentDto> comments) {
+    public PostDto(Post post, AuthorDTO author, Integer likeCount, Boolean isLiked, List<CommentDto> comments, List<String> tags) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
@@ -28,5 +29,6 @@ public class PostDto {
         this.likeCount = likeCount;
         this.isLiked = isLiked;
         this.comments = comments;
+        this.tags = tags;
     }
 }

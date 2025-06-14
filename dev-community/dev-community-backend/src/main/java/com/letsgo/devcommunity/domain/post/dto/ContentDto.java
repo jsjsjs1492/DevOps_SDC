@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -18,15 +20,17 @@ public class ContentDto {
     Integer likeCount;
     Integer commentCount;
     LocalDateTime createdAt;
+    List<String> tags;
 
-    public static ContentDto fromEntity(Post post, Integer likeCount, Integer commentCount, AuthorDTO authorDTO) {
+    public static ContentDto fromEntity(Post post, Integer likeCount, Integer commentCount, AuthorDTO authorDTO, List<String> tags) {
         return new ContentDto(
                 post.getId(),
                 post.getTitle(),
                 authorDTO,
                 likeCount,
                 commentCount,
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                tags
         );
     }
 }

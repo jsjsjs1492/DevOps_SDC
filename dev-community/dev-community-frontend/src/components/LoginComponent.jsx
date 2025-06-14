@@ -1,22 +1,21 @@
+// LoginComponent.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './LoginStyles.css';
 
-// Add axios default config for handling cookies
 axios.defaults.withCredentials = true;
 
 const LoginComponent = () => {
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=(?:.*[A-Z]){1,})(?=.*\d)(?=.*[^A-Za-z0-9]).{8,20}$/;
   const navigate = useNavigate();
   const [showLogin, setShowLogin] = useState(true);
   
-  // States for login
   const [InputId, setLoginId] = useState('');
   const [InputPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
-  // States for signup
   const [signupPassword, setSignupPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [signupError, setSignupError] = useState('');
@@ -28,11 +27,8 @@ const LoginComponent = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   
-  // Add state for alert
   const [alert, setAlert] = useState('');
   
-  
-  // Add useEffect for alert auto-dismiss
   useEffect(() => {
     if (alert) {
       const timer = setTimeout(() => {
@@ -42,15 +38,14 @@ const LoginComponent = () => {
     }
   }, [alert]);
 
-  // Handle login
   const handleLogin = async (e) => {
     e.preventDefault();
     if (InputId === 'test' && InputPassword === 'test') {
       setAlert('로그인 성공! (테스트 모드)');
       setLoginError('');
-      // 실제 사용자 정보 저장
+      // ★★★ 수정: userId 대신 id로 저장 ★★★
       localStorage.setItem('user', JSON.stringify({
-        userId: 1,
+        id: 1, // 테스트 유저의 id
         loginId: InputId,
         nickname: '테스트유저'
       }));
@@ -63,17 +58,39 @@ const LoginComponent = () => {
         password: InputPassword
       });
 
+      console.log("1. Axios POST response status:", response.status);
+      console.log("2. Axios POST response data:", response.data);
+
       if (response.status === 200) {
         setLoginError('');
         setAlert('로그인 성공!');
-        const { userId, loginId, nickname } = response.data;
-        // 실제 사용자 정보 저장
+        
+        // 서버 응답에서 id, loginId, nickname 직접 추출
+        const { id, loginId, nickname } = response.data;
+
+        console.log("3. Extracted ID:", id);
+        console.log("4. Extracted LoginId:", loginId);
+        console.log("5. Extracted Nickname:", nickname);
+
+        if (typeof id === 'undefined' || id === null) {
+            console.error("Critical Error: 'id' is undefined or null from server response.");
+            setLoginError('로그인 정보를 가져오는 데 실패했습니다: 사용자 ID를 찾을 수 없습니다.');
+            return; 
+        }
+
+        // ★★★ 수정: userId 대신 id로 저장 ★★★
         localStorage.setItem('user', JSON.stringify({
-          userId,
-          loginId,
-          nickname
+          id: id, // 서버에서 받은 'id'를 그대로 저장
+          loginId: loginId,
+          nickname: nickname,
+          profileImageUrl: "https://play-lh.googleusercontent.com/38AGKCqmbjZ9OuWx4YjssAz3Y0DTWbiM5HB0ove1pNBq_o9mtWfGszjZNxZdwt_vgHo=w240-h480-rw"
         }));
+
+        console.log("6. Stored in localStorage:", localStorage.getItem('user'));
+
         navigate('/main');
+        console.log("7. Navigating to /main");
+
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -81,14 +98,14 @@ const LoginComponent = () => {
       } else {
         setLoginError('아이디 또는 비밀번호를 확인하세요.');
       }
+      console.error("Login API Call Error:", error.response || error);
     }
   };
   
-  // Handle signup
   const handleSignup = async (e) => {
     e.preventDefault();
     if (!passwordRegex.test(signupPassword)) {
-      setSignupError('비밀번호 조건을 확인해주세요.');
+      setSignupError('비밀번호 조건을 확인해주세요. (8~20자의 영문 대/소문자, 숫자, 특수문자 포함)');
       return;
     }
     if (!isVerified) {
@@ -96,7 +113,6 @@ const LoginComponent = () => {
       return;
     }
 
-    // 테스트 모드: 닉네임과 패스워드가 1234일 때
     if (nickname === '1234' && signupPassword === '1234') {
       setAlert('회원가입이 완료되었습니다. (테스트 모드)');
       setShowLogin(true);
@@ -128,43 +144,40 @@ const LoginComponent = () => {
             setSignupError('회원가입에 실패했습니다.');
         }
       }
+      console.error("Signup Error:", error.response || error);
     }
   };
   
-  // Toggle between login and signup forms
   const toggleForm = () => {
     setShowLogin(!showLogin);
-    // Reset states when switching forms
     setEmail('');
     setSignupId('');
     setIsEmailValid(false);
     setVerificationSent(false);
     setVerificationCode('');
     setIsVerified(false);
+    setLoginError('');
+    setSignupError('');
+    setSignupPassword('');
+    setNickname('');
   };
   
-  // Handle email validation
   const handleEmailChange = (e) => {
     const inputEmail = e.target.value;
     setEmail(inputEmail);
-    
-    // Check if email ends with @sogang.ac.kr
     setIsEmailValid(inputEmail.endsWith('@sogang.ac.kr'));
   };
   
-  // Send verification code
   const sendVerificationCode = async (e) => {
     e.preventDefault();
     if (isEmailValid) {
       try {
-        // Test mode for specific email
         if (email === 'test@sogang.ac.kr') {
           setVerificationSent(true);
           setAlert('인증번호가 전송되었습니다. (테스트 코드: 1234)');
           return;
         }
 
-        // Real API call
         await axios.post('/auth/email/verify', {
           email: email
         });
@@ -178,14 +191,13 @@ const LoginComponent = () => {
           setAlert('인증번호 전송에 실패했습니다.');
         }
         setVerificationSent(false);
+        console.error("Email Verification Send Error:", error.response || error);
       }
     }
   };
 
-  // Verify the code
   const verifyCode = async () => {
     try {
-      // Test mode for specific email
       if (email === 'test@sogang.ac.kr' && verificationCode === '1234') {
         setIsVerified(true);
         setAlert('인증이 완료되었습니다.');
@@ -207,10 +219,10 @@ const LoginComponent = () => {
       } else {
         setAlert('인증에 실패했습니다.');
       }
+      console.error("Email Verification Check Error:", error.response || error);
     }
   };
 
-  // 나머지 코드는 그대로 유지
   return (
     <div className="login">
       {alert && <div className="alert">{alert}</div>}
@@ -219,7 +231,6 @@ const LoginComponent = () => {
           <img src="https://image.freepik.com/free-vector/code-typing-concept-illustration_114360-3581.jpg" alt="user login" />
         </div>
         <div className="login__forms">
-          {/* Login form */}
           <form onSubmit={handleLogin} className={`login__register ${showLogin ? 'block' : 'none'}`} id="login-in">
             <h1 className="login__title">Sign In</h1>
             <div className="login__box">
@@ -260,7 +271,6 @@ const LoginComponent = () => {
             </div>
           </form>
           
-          {/* Create account form */}
           <form onSubmit={handleSignup} className={`login__create ${showLogin ? 'none' : 'block'}`} id="login-up">
             <h1 className="login__title">Create Account</h1>
             
@@ -287,6 +297,7 @@ const LoginComponent = () => {
                 required 
               />
               <button 
+                type="button"
                 className={`verify-btn ${isEmailValid ? 'active' : 'disabled'}`}
                 onClick={sendVerificationCode}
                 disabled={!isEmailValid || verificationSent}
@@ -295,7 +306,6 @@ const LoginComponent = () => {
               </button>
             </div>
             
-            {/* Verification code section remains the same */}
             {verificationSent && (
               <div className="login__box verification-box">
                 <i className='bx bx-check-circle login__icon'></i>
@@ -346,7 +356,6 @@ const LoginComponent = () => {
                 required
               />
             </div>
-            {/* 비밀번호 조건 불일치 시 경고 메시지 */}
             {signupPassword && !isPasswordValid && (
               <div className="login__error password-warning">
                 8~20자의 영문 대/소문자, 숫자, 특수문자를 사용해 주세요.

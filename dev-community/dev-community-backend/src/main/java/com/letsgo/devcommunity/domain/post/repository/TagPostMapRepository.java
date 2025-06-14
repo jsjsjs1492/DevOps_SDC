@@ -12,4 +12,6 @@ import java.util.Optional;
 @Transactional
 public interface TagPostMapRepository extends JpaRepository<TagPostMap, Long> {
     List<TagPostMap> findAllByTagId(Long tagId);
+    Optional<TagPostMap> findByTagIdAndPostId(Long tagId, Long postId);
+    List<TagPostMap> findAllByPostId(Long postId);
 }

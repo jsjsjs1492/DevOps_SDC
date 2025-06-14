@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import static com.letsgo.devcommunity.global.common.FileStorageService.DEFAULT_PROFILE_IMAGE_URL;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,7 +83,7 @@ class AuthServiceTest {
                 signUpRequest.email(),
                 "encodedPassword",
                 signUpRequest.nickname(),
-                null
+                DEFAULT_PROFILE_IMAGE_URL
         );
 
         assertThat(capturedMember).isEqualTo(expectedMember);
@@ -148,6 +149,124 @@ class AuthServiceTest {
         verify(emailVerificationStore).isVerified(signUpRequest.email());
         verify(authRepository).existsByLoginId(signUpRequest.loginId());
         verify(authRepository).existsByEmail(signUpRequest.email());
+        verify(authRepository, never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 성공: 유효한 비밀번호")
+    void signUp_Success_ValidPassword() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("validUser", "valid@example.com", "ValidPass1!", "validNickname");
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+        when(passwordEncoder.encode(signUpRequest.password())).thenReturn("encodedPassword");
+
+        // when & then
+        assertDoesNotThrow(() -> authService.signUp(signUpRequest));
+        verify(passwordEncoder).encode(signUpRequest.password()); // 비밀번호 인코딩 호출 검증
+        verify(authRepository).save(any(Member.class)); // 저장 호출 검증
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호가 너무 짧음")
+    void signUp_Failure_PasswordTooShort() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("testuser", "test@example.com", "Short1!", "testNickname");
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+
+        // when
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signUp(signUpRequest));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("비밀번호는 8자 이상 20자 이하로 입력해주세요.");
+        verify(authRepository, never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호가 너무 긺")
+    void signUp_Failure_PasswordTooLong() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("testuser", "test@example.com", "LooooooooongPassword1!", "testNickname"); // 22 chars
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+
+        // when
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signUp(signUpRequest));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("비밀번호는 8자 이상 20자 이하로 입력해주세요.");
+        verify(authRepository, never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호에 대문자 없음")
+    void signUp_Failure_PasswordNoUpperCase() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("testuser", "test@example.com", "nouppercase1!", "testNickname");
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+
+        // when
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signUp(signUpRequest));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("비밀번호는 영문 대/소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+        verify(authRepository, never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호에 소문자 없음")
+    void signUp_Failure_PasswordNoLowerCase() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("testuser", "test@example.com", "NOLOWERCASE1!", "testNickname");
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+
+        // when
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signUp(signUpRequest));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("비밀번호는 영문 대/소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+        verify(authRepository, never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호에 숫자 없음")
+    void signUp_Failure_PasswordNoDigit() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("testuser", "test@example.com", "NoDigitPass!", "testNickname");
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+
+        // when
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signUp(signUpRequest));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("비밀번호는 영문 대/소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+        verify(authRepository, never()).save(any(Member.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호에 특수문자 없음")
+    void signUp_Failure_PasswordNoSpecialChar() {
+        // given
+        SignUpRequest signUpRequest = TestDataFactory.createSignUpRequest("testuser", "test@example.com", "NoSpecialChar1", "testNickname");
+        when(emailVerificationStore.isVerified(signUpRequest.email())).thenReturn(true);
+        when(authRepository.existsByLoginId(signUpRequest.loginId())).thenReturn(false);
+        when(authRepository.existsByEmail(signUpRequest.email())).thenReturn(false);
+
+        // when
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signUp(signUpRequest));
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("비밀번호는 영문 대/소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
         verify(authRepository, never()).save(any(Member.class));
     }
 
@@ -226,7 +345,7 @@ class TestDataFactory {
 
     // 기본 계정 정보 생성
     static SignUpRequest createDefaultSignUpRequest() {
-        return new SignUpRequest("defaultLoginId", "defaultEmail@example.com", "defaultPassword", "defaultNickname");
+        return new SignUpRequest("defaultLoginId", "defaultEmail@example.com", "DefaultPass1!", "defaultNickname"); // 수정된 비밀번호
     }
 
     // 커스터마이징 계정 정보 생성
@@ -243,6 +362,6 @@ class TestDataFactory {
     }
 
     static Member createMember(String loginId, String email, String password, String nickname) {
-        return new Member(loginId, email, password, nickname, null);
+        return new Member(loginId, email, password, nickname, DEFAULT_PROFILE_IMAGE_URL);
     }
 }

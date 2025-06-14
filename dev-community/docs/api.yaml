@@ -5,7 +5,6 @@ info:
 
 components:
   schemas:
-  
     ErrorResponse:
       type: object
       properties:
@@ -22,114 +21,119 @@ components:
           type: string
           format: date-time
           example: "2025-03-26T16:00:00Z"
-          
+
     UserSimple:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         nickname:
           type: string
+          example: "개발자닉네임"
         profileImageUrl:
           type: string
+          format: uri
+          example: "https://devcommunity-file.s3.ap-northeast-2.amazonaws.com/profiles/sample_profile.png"
 
     PostDetailResponse:
       type: object
       properties:
         id:
           type: integer
+          example: 10
         title:
           type: string
+          example: "게시글 제목입니다"
         content:
           type: string
+          example: "게시글 내용입니다. 마크다운 지원!"
         author:
           $ref: '#/components/schemas/UserSimple'
         createdAt:
           type: string
           format: date-time
+          example: "2025-03-26T10:00:00Z"
         likeCount:
           type: integer
+          example: 25
         isLiked:
           type: boolean
+          example: true
         comments:
           type: array
           items:
             $ref: '#/components/schemas/Comment'
-            
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - "java"
+            - "spring"
+            - "swagger"
+
     PostCreateResponse:
       type: object
       properties:
         id:
           type: integer
+          example: 11
         createdAt:
           type: string
           format: date-time
+          example: "2025-03-27T14:30:00Z"
 
     Comment:
       type: object
       properties:
         id:
           type: integer
-        author:
+          example: 101
+        author: # 댓글 작성자 닉네임 또는 UserSimple 참조 고려
           type: string
+          example: "댓글작성자"
         content:
           type: string
+          example: "이것은 댓글 내용입니다."
         createdAt:
           type: string
           format: date-time
-          
-    CreatePostRequest:
-      type: object
-      required:
-        - title
-        - content
-      properties:
-        title:
-          type: string
-          example: "개발자 커뮤니티 첫 글입니다"
-        content:
-          type: string
-          example: "안녕하세요! 첫 글을 작성해봅니다. 반가워요 :)"
-          
-    UpdatePostRequest:
-      type: object
-      required:
-        - title
-        - content
-      properties:
-        title:
-          type: string
-          example: "제목 수정입니다"
-        content:
-          type: string
-          example: "수정된 본문입니다."
+          example: "2025-03-26T11:00:00Z"
 
     PostUpdateResponse:
       type: object
       properties:
         id:
           type: integer
+          example: 10
         updatedAt:
           type: string
           format: date-time
-          
+          example: "2025-03-28T09:15:00Z"
+
     PostSummary:
       type: object
       properties:
         id:
           type: integer
+          example: 12
         title:
           type: string
+          example: "요약된 게시글 제목"
         author:
           $ref: '#/components/schemas/UserSimple'
         likeCount:
           type: integer
+          example: 5
         commentCount:
           type: integer
+          example: 2
         createdAt:
           type: string
           format: date-time
-          
+          example: "2025-03-25T18:00:00Z"
+
     PostListResponse:
       type: object
       properties:
@@ -139,12 +143,92 @@ components:
             $ref: '#/components/schemas/PostSummary'
         totalPages:
           type: integer
+          example: 10
         totalElements:
           type: integer
-        number:
+          example: 98
+        number: # 현재 페이지 번호 (0부터 시작)
           type: integer
-        size:
+          example: 0
+        size: # 페이지 당 요소 수
           type: integer
+          example: 10
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - "java"
+            - "spring"
+            - "swagger"
+
+    UpdateDto: # 게시글 생성 및 수정 시 사용
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          example: "새로운 게시글 제목"
+        content:
+          type: string
+          example: "새로운 게시글 내용입니다. 태그도 포함할 수 있습니다."
+        tags:
+          type: array
+          items:
+            type: string
+            example: "Java"
+          example: ["Spring", "Java", "Database"]
+
+    PasswordChangeRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          example: "currentSecurePassword123"
+        newPassword:
+          type: string
+          format: password
+          example: "newStrongPassword456!"
+
+    NicknameChangeRequest:
+      type: object
+      required:
+        - nickname
+      properties:
+        nickname:
+          type: string
+          example: "새로운멋진닉네임"
+
+    ProfileImageUpdateResponse:
+      type: object
+      properties:
+        profileImageUrl:
+          type: string
+          format: uri
+          example: "https://devcommunity-file.s3.ap-northeast-2.amazonaws.com/profiles/user123/profile_image_timestamp.png"
+
+    SimpleSuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "요청이 성공적으로 처리되었습니다."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-03-28T10:00:00Z"
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID # 실제 사용하는 세션 쿠키 이름
 
 paths:
   /auth/signup:
@@ -175,13 +259,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: 중복 이메일
+          description: 중복된 이메일, 로그인 ID 또는 닉네임
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-                
-  
+
   /auth/login:
     post:
       summary: 로그인
@@ -193,23 +276,22 @@ paths:
             schema:
               type: object
               required:
-                - id
+                - loginId 
                 - password
               properties:
-                id:
+                loginId:
                   type: string
-                  format: id
-                  example: dev123
+                  example: "user123"
                 password:
                   type: string
                   format: password
-                  example: securepassword
+                  example: "securePassword123"
       responses:
         '200':
           description: 로그인 성공
           headers:
             Set-Cookie:
-              description: 세션 쿠키 (JSESSIONID)
+              description: "세션 쿠키 (JSESSIONID)"
               schema:
                 type: string
           content:
@@ -217,14 +299,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  userId:
+                  id:
                     type: integer
                   loginId:
                     type: string
                   nickname:
                     type: string
         '401':
-          description: 인증 실패
+          description: "인증 실패 (아이디 또는 비밀번호 불일치)"
           content:
             application/json:
               schema:
@@ -234,16 +316,18 @@ paths:
     post:
       summary: 로그아웃
       description: 현재 세션을 종료합니다.
+      security:
+        - cookieAuth: []
       responses:
         '204':
-          description: 로그아웃 성공 (세션 만료)
+          description: "로그아웃 성공 (세션 만료)"
         '401':
-          description: 인증되지 않은 사용자
+          description: "인증되지 않은 사용자 (세션 없음)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  
+
   /auth/email/verify:
     post:
       summary: 이메일 인증 코드 전송
@@ -264,7 +348,7 @@ paths:
         '200':
           description: 인증 메일 전송 성공
         '400':
-          description: 잘못된 이메일 형식 또는 이미 인증됨
+          description: "잘못된 이메일 형식 또는 이미 인증된 이메일"
           content:
             application/json:
               schema:
@@ -292,24 +376,23 @@ paths:
         '200':
           description: 인증 성공
         '400':
-          description: 인증 실패 (코드 불일치, 만료 등)
+          description: "인증 실패 (코드 불일치, 만료 등)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-
   /member/{loginId}:
     get:
       summary: 사용자 정보 조회
-      description: loginId에 해당하는 프로필 정보를 조회한다.
+      description: loginId에 해당하는 사용자의 프로필 정보를 조회합니다.
       parameters:
         - name: loginId
           in: path
           required: true
           schema:
             type: string
-          description: 사용자 로그인 ID
+          description: 조회할 사용자의 로그인 ID
       responses:
         '200':
           description: 회원 정보 조회 성공
@@ -329,7 +412,13 @@ paths:
                     type: integer
                   receivedLikeCount:
                     type: integer
-                    
+        '404':
+          description: 사용자를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /member/{loginId}/followers:
     get:
       summary: 팔로워 목록 조회
@@ -340,6 +429,7 @@ paths:
           required: true
           schema:
             type: string
+          description: 팔로워 목록을 조회할 사용자의 로그인 ID
       responses:
         '200':
           description: 팔로워 목록 조회 성공
@@ -357,6 +447,12 @@ paths:
                     profileImageUrl:
                       type: string
                       format: uri
+        '404':
+          description: 사용자를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /member/{loginId}/followings:
     get:
@@ -368,6 +464,7 @@ paths:
           required: true
           schema:
             type: string
+          description: 팔로잉 목록을 조회할 사용자의 로그인 ID
       responses:
         '200':
           description: 팔로잉 목록 조회 성공
@@ -385,48 +482,276 @@ paths:
                     profileImageUrl:
                       type: string
                       format: uri
-                      
-  /member/{loginId}/follow:
-    post:
-      summary: 팔로우 추가
-      description: 로그인한 사용자가 loginId에 해당하는 사용자를 팔로우합니다.
-      parameters:
-        - name: loginId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: 팔로우 대상 유저의 로그인 ID
-      responses:
-        '200':
-          description: 팔로우 성공
-        '400':
-          description: 이미 팔로우 중인 경우 등 오류
+        '404':
+          description: 사용자를 찾을 수 없음
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-    delete:
-      summary: 팔로우 취소
-      description: 로그인한 사용자가 loginId에 해당하는 사용자에 대한 팔로우를 취소합니다.
+  /member/{loginId}/follow:
+    post:
+      summary: 팔로우 추가
+      description: 로그인한 사용자가 loginId에 해당하는 사용자를 팔로우합니다.
+      security:
+        - cookieAuth: []
       parameters:
         - name: loginId
           in: path
           required: true
           schema:
             type: string
-          description: 언팔로우 대상 유저의 로그인 ID
+          description: 팔로우할 대상 사용자의 로그인 ID
       responses:
         '200':
-          description: 언팔로우 성공
-        '404':
-          description: 팔로우 관계가 존재하지 않을 경우
+          description: 팔로우 성공
+        '400':
+          description: "이미 팔로우 중이거나 자기 자신을 팔로우하려는 경우"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 팔로우 대상 사용자를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 팔로우 취소 (언팔로우)
+      description: 로그인한 사용자가 loginId에 해당하는 사용자에 대한 팔로우를 취소합니다.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: loginId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 언팔로우할 대상 사용자의 로그인 ID
+      responses:
+        '200':
+          description: 언팔로우 성공
+        '400':
+          description: "팔로우 관계가 아닌 사용자를 언팔로우하려는 경우"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 언팔로우 대상 사용자를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /member/me/password:
+    put:
+      summary: 비밀번호 변경
+      description: 로그인한 사용자의 비밀번호를 변경합니다.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: 비밀번호 변경 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleSuccessResponse'
+        '400':
+          description: "유효성 검증 실패 (예: 현재 비밀번호 불일치, 새 비밀번호 정책 위반)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /member/me/nickname:
+    put:
+      summary: 닉네임 변경
+      description: 로그인한 사용자의 닉네임을 변경합니다.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NicknameChangeRequest'
+      responses:
+        '200':
+          description: 닉네임 변경 성공, 변경된 사용자 정보 반환
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSimple' # 변경된 사용자 정보 반환
+        '400':
+          description: "유효성 검증 실패 (예: 닉네임 형식 오류, 길이 제한)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 이미 사용 중인 닉네임
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /member/me/profile-image:
+    post:
+      summary: 프로필 이미지 변경/업로드
+      description: 로그인한 사용자의 프로필 이미지를 업로드하거나 변경합니다.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 업로드할 이미지 파일
+      responses:
+        '200':
+          description: 프로필 이미지 업로드/변경 성공, 새로운 이미지 URL 반환
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileImageUpdateResponse'
+        '400':
+          description: 잘못된 파일 형식, 파일 크기 초과 또는 파일 처리 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 프로필 이미지 삭제 (기본값으로 재설정)
+      description: 로그인한 사용자의 프로필 이미지를 기본 이미지로 재설정합니다. 응답에는 기본 프로필 이미지 URL이 포함됩니다.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 프로필 이미지 삭제 및 기본값 재설정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileImageUpdateResponse' # 기본 이미지 URL 포함
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /post:
+    get:
+      summary: 게시글 목록 조회
+      description: 전체 게시글 목록을 최신순으로 조회합니다. 페이지네이션, 정렬 옵션을 지원합니다.
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: "페이지 번호 (0부터 시작)"
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: 페이지당 게시글 수
+          schema:
+            type: integer
+            default: 10
+        - name: sort
+          in: query
+          required: false
+          description: "정렬 기준 및 방향 (예: `createdAt,desc` 또는 `likeCount,desc`)"
+          schema:
+            type: string
+            example: "createdAt,desc"
+      responses:
+        '200':
+          description: 게시글 목록 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostListResponse'
+        '400':
+          description: "잘못된 요청 파라미터 (예: 정렬 기준 형식 오류)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: 게시글 작성
+      description: 사용자가 새로운 게시글을 작성합니다.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDto'
+      responses:
+        '201':
+          description: 게시글 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostCreateResponse'
+        '400':
+          description: "유효성 검사 실패 (예: 제목 또는 내용 누락)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /post/{postId}:
     get:
       summary: 게시글 상세 조회
@@ -436,6 +761,7 @@ paths:
           required: true
           schema:
             type: integer
+          description: 조회할 게시글의 ID
       responses:
         '200':
           description: 게시글 상세 정보
@@ -443,58 +769,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostDetailResponse'
-                
-    delete:
-      summary: 게시글 삭제
-      description: 사용자가 자신이 작성한 게시글을 삭제한다.
-      parameters:
-        - name: postId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: 삭제 성공 (내용 없음)
-        '401':
-          description: 인증 필요
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: 권한 없음 (본인 게시글 아님)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 게시글 없음
+          description: 해당 ID의 게시글을 찾을 수 없음
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-                
-    
-                
     put:
       summary: 게시글 수정
       description: 사용자가 자신이 작성한 게시글을 수정합니다.
+      security:
+        - cookieAuth: []
       parameters:
         - name: postId
           in: path
           required: true
           schema:
             type: integer
+          description: 수정할 게시글의 ID
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdatePostRequest'
+              $ref: '#/components/schemas/UpdateDto'
       responses:
         '200':
-          description: 수정 성공
+          description: 게시글 수정 성공
           content:
             application/json:
               schema:
@@ -512,96 +813,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: 권한 없음
+          description: "권한 없음 (본인이 작성한 게시글이 아님)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 게시글 없음
+          description: 해당 ID의 게시글을 찾을 수 없음
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  
-  /post:
-    get:
-      summary: 게시글 목록 조회
-      description: 전체 게시글 목록을 최신순으로 조회합니다. 정렬/검색/필터는 확장 가능합니다.
-      parameters:
-        - name: page
-          in: query
-          required: false
-          description: 페이지 번호 (0부터 시작)
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          required: false
-          description: 페이지당 게시글 수
-          schema:
-            type: integer
-            default: 10
-        - name: sort
-          in: query
-          required: false
-          description: 정렬 기준 (`createdAt,desc` 또는 `likeCount,desc` 등)
-          schema:
-            type: string
-            example: "createdAt,desc"
-      responses:
-        '200':
-          description: 게시글 목록 조회 성공
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostListResponse'
-        '400':
-          description: 잘못된 요청 파라미터
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    post:
-      summary: 게시글 작성
-      description: 사용자가 새로운 게시글을 작성한다.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePostRequest'
-      responses:
-        '201':
-          description: 게시글 생성 성공
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostCreateResponse'
-        '400':
-          description: 유효성 검사 실패
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: 인증 필요
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-                
-  /post/{postId}/comment:
-    post:
-      summary: 댓글 작성
-      description: 사용자가 게시글에 댓글을 작성합니다.
+    delete:
+      summary: 게시글 삭제
+      description: 사용자가 자신이 작성한 게시글을 삭제합니다.
+      security:
+        - cookieAuth: []
       parameters:
         - name: postId
           in: path
           required: true
           schema:
             type: integer
+          description: 삭제할 게시글의 ID
+      responses:
+        '204':
+          description: 게시글 삭제 성공 (내용 없음)
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: "권한 없음 (본인이 작성한 게시글이 아님)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 해당 ID의 게시글을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /post/{postId}/comment:
+    post:
+      summary: 댓글 작성
+      description: 사용자가 특정 게시글에 댓글을 작성합니다.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: 댓글을 작성할 게시글의 ID
       requestBody:
         required: true
         content:
@@ -616,10 +885,10 @@ paths:
                   example: "좋은 글 감사합니다!"
       responses:
         '201':
-          description: 댓글 작성 성공
+          description: 댓글 작성 성공, 생성된 댓글 정보 반환
           content:
             application/json:
-              schema:
+              schema: # 생성된 댓글 객체 (Comment 스키마와 유사하게 정의)
                 type: object
                 properties:
                   id:
@@ -628,7 +897,7 @@ paths:
                     type: string
                     format: date-time
         '400':
-          description: 유효성 검사 실패
+          description: "유효성 검사 실패 (예: 내용 누락)"
           content:
             application/json:
               schema:
@@ -640,7 +909,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 게시글 없음
+          description: 댓글을 작성할 게시글을 찾을 수 없음
           content:
             application/json:
               schema:
@@ -649,16 +918,19 @@ paths:
   /comment/{commentId}:
     delete:
       summary: 댓글 삭제
-      description: 사용자가 자신의 댓글을 삭제합니다.
+      description: 사용자가 자신이 작성한 댓글을 삭제합니다.
+      security:
+        - cookieAuth: []
       parameters:
         - name: commentId
           in: path
           required: true
           schema:
             type: integer
+          description: 삭제할 댓글의 ID
       responses:
         '204':
-          description: 삭제 성공 (내용 없음)
+          description: 댓글 삭제 성공 (내용 없음)
         '401':
           description: 인증 필요
           content:
@@ -666,13 +938,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: 권한 없음 (본인 댓글이 아님)
+          description: "권한 없음 (본인이 작성한 댓글이 아님)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 댓글 없음
+          description: 해당 ID의 댓글을 찾을 수 없음
           content:
             application/json:
               schema:
@@ -680,19 +952,22 @@ paths:
 
   /post/{postId}/like:
     post:
-      summary: 게시글 추천
-      description: 사용자가 게시글을 추천합니다.
+      summary: 게시글 추천 (좋아요)
+      description: 사용자가 특정 게시글을 추천합니다.
+      security:
+        - cookieAuth: []
       parameters:
         - name: postId
           in: path
           required: true
           schema:
             type: integer
+          description: 추천할 게시글의 ID
       responses:
-        '201':
-          description: 추천 성공
+        '201': # 또는 '200' OK
+          description: 게시글 추천 성공
         '400':
-          description: 이미 추천한 경우 또는 잘못된 요청
+          description: "이미 추천한 게시글이거나 잘못된 요청"
           content:
             application/json:
               schema:
@@ -704,26 +979,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 게시글 없음
+          description: 추천할 게시글을 찾을 수 없음
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
     delete:
       summary: 게시글 추천 취소
       description: 사용자가 추천한 게시글의 추천을 취소합니다.
+      security:
+        - cookieAuth: []
       parameters:
         - name: postId
           in: path
           required: true
           schema:
             type: integer
+          description: 추천을 취소할 게시글의 ID
       responses:
         '204':
-          description: 추천 취소 성공 (내용 없음)
+          description: 게시글 추천 취소 성공 (내용 없음)
         '400':
-          description: 추천하지 않은 게시글을 취소한 경우
+          description: "추천하지 않은 게시글의 추천을 취소하려는 경우"
           content:
             application/json:
               schema:
@@ -735,7 +1012,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: 게시글 없음
+          description: 추천을 취소할 게시글을 찾을 수 없음
           content:
             application/json:
               schema:
@@ -744,7 +1021,7 @@ paths:
   /post/tag/search:
     get:
       summary: 태그 기반 게시글 검색
-      description: 특정 태그가 포함된 게시글을 검색합니다.
+      description: 특정 태그가 포함된 게시글 목록을 검색합니다.
       parameters:
         - name: query
           in: query
@@ -752,11 +1029,11 @@ paths:
           description: 검색할 태그 이름
           schema:
             type: string
-            example: "Java"
+            example: "SpringBoot"
         - name: page
           in: query
           required: false
-          description: 페이지 번호 (0부터 시작)
+          description: "페이지 번호 (0부터 시작)"
           schema:
             type: integer
             default: 0
@@ -776,19 +1053,13 @@ paths:
             example: "createdAt,desc"
       responses:
         '200':
-          description: 태그 검색 결과
+          description: "태그 검색 결과 (게시글 목록)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostListResponse'
         '400':
-          description: 잘못된 요청 파라미터
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: 해당 태그가 존재하지 않음
+          description: "잘못된 요청 파라미터 (예: query 누락)"
           content:
             application/json:
               schema:
@@ -797,19 +1068,19 @@ paths:
   /post/search:
     get:
       summary: 키워드 기반 게시글 검색
-      description: 게시글 제목 또는 내용에 특정 키워드를 포함하는 게시글을 검색합니다.
+      description: 게시글 제목 또는 내용에 특정 키워드를 포함하는 게시글 목록을 검색합니다.
       parameters:
         - name: query
           in: query
           required: true
-          description: 검색 키워드
+          description: 검색할 키워드
           schema:
             type: string
-            example: "스프링"
+            example: "데이터베이스"
         - name: page
           in: query
           required: false
-          description: 페이지 번호 (0부터 시작)
+          description: "페이지 번호 (0부터 시작)"
           schema:
             type: integer
             default: 0
@@ -829,28 +1100,29 @@ paths:
             example: "createdAt,desc"
       responses:
         '200':
-          description: 키워드 검색 결과
+          description: "키워드 검색 결과 (게시글 목록)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostListResponse'
         '400':
-          description: 잘못된 요청 파라미터
+          description: "잘못된 요청 파라미터 (예: query 누락)"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /post/my/{userId}:
+  /post/my/{userId}: # 경로 일관성 고려: /member/{userId}/posts 또는 /member/me/posts (로그인 사용자)
     get:
-      summary: 사용자가 작성한 게시글 조회
-      description: 특정 사용자가 작성한 게시글 목록을 조회합니다.
+      summary: 특정 사용자가 작성한 게시글 목록 조회
+      description: "userId에 해당하는 사용자가 작성한 모든 게시글 목록을 조회합니다."
       parameters:
-        - name: userId
+        - name: userId # 경로 파라미터가 loginId(string)와 userId(integer)로 혼용되는 점 참고
           in: path
           required: true
           schema:
-            type: integer
+            type: integer # 또는 string (loginId) - API 전반적 일관성 필요
+          description: "작성글을 조회할 사용자의 ID"
       responses:
         '200':
           description: 사용자 작성 게시글 목록 조회 성공
@@ -861,33 +1133,34 @@ paths:
                 items:
                   $ref: '#/components/schemas/PostSummary'
         '404':
-          description: 사용자를 찾을 수 없음
+          description: 해당 ID의 사용자를 찾을 수 없음
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /post/like/{userId}:
+  /post/like/{userId}: # 경로 일관성 고려: /member/{userId}/liked-posts 또는 /member/me/liked-posts
     get:
-      summary: 사용자가 좋아요한 게시글 조회
-      description: 특정 사용자가 좋아요를 누른 게시글 목록을 조회합니다.
+      summary: 특정 사용자가 좋아요한 게시글 목록 조회
+      description: "userId에 해당하는 사용자가 좋아요를 누른 모든 게시글 목록을 조회합니다."
       parameters:
         - name: userId
           in: path
           required: true
           schema:
-            type: integer
+            type: integer # 또는 string (loginId)
+          description: "좋아요한 글을 조회할 사용자의 ID"
       responses:
         '200':
           description: 좋아요한 게시글 목록 조회 성공
           content:
             application/json:
-              schema:
+              schema: # PostListResponse와 유사한 페이징된 PostSummary 배열 또는 단순 PostSummary 배열
                 type: array
                 items:
                   $ref: '#/components/schemas/PostSummary'
         '404':
-          description: 사용자를 찾을 수 없음
+          description: 해당 ID의 사용자를 찾을 수 없음
           content:
             application/json:
               schema:

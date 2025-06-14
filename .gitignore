@@ -271,3 +271,4 @@ gradle-app.setting
 
 application.properties
 .vscode
+Jenkinsfile

@@ -1,15 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Editor } from '@toast-ui/react-editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './EditPostStyles.css';
+import './TagStyles.css'; // 태그 스타일 추가
+import tags from '../data/tags'; // 태그 목록 import
 
 const EditPost = () => {
   const { id: postId } = useParams();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]); // 선택된 태그 배열
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const editorRef = useRef(null);
+
+  // 태그 선택 처리
+  const handleTagClick = (tag) => {
+    if (selectedTags.includes(tag)) {
+      // 이미 선택된 태그면 제거
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      // 최대 5개까지만 선택 가능
+      if (selectedTags.length < 5) {
+        setSelectedTags([...selectedTags, tag]);
+      } else {
+        alert('태그는 최대 5개까지 선택 가능합니다.');
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -17,6 +38,7 @@ const EditPost = () => {
         const response = await axios.get(`/post/${postId}`);
         setTitle(response.data.title);
         setContent(response.data.content);
+        setSelectedTags(response.data.tags || []);
         setLoading(false);
       } catch (error) {
         console.error('게시글 정보 로딩 실패:', error);
@@ -36,11 +58,17 @@ const EditPost = () => {
       return;
     }
 
+    if (selectedTags.length === 0) {
+      alert('태그를 최소 1개 이상 선택해주세요.');
+      return;
+    }
+
     try {
-      // PUT 요청으로 게시글 수정
-      const response = await axios.put(`/post/${postId}`, {
+      // PUT 요청으로 게시글 수정 (tags 포함)
+      await axios.put(`/post/${postId}`, {
         title,
-        content
+        content,
+        tags: selectedTags
       });
       
       // 수정 성공 시 상세 페이지로 이동
@@ -102,15 +130,49 @@ const EditPost = () => {
           </div>
           <div className="form-group">
             <label htmlFor="content">내용</label>
-            <textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="내용을 입력하세요"
-              rows="10"
-              required
+            <Editor
+              ref={editorRef}
+              initialValue={content}
+              previewStyle="vertical"
+              height="300px"
+              initialEditType="wysiwyg"
+              hideModeSwitch
+              useCommandShortcut
+              onChange={() => {
+                const md = editorRef.current.getInstance().getMarkdown();
+                setContent(md);
+              }}
             />
           </div>
+          
+          {/* 태그 선택 UI */}
+          <div className="form-group">
+            <label className="tags-title">태그 선택 (최대 5개)</label>
+            <div className="tags-list">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className={`tag-item ${selectedTags.includes(tag) ? 'selected' : ''}`}
+                  onClick={() => handleTagClick(tag)}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            
+            {selectedTags.length > 0 && (
+              <div className="selected-tags">
+                <span>선택된 태그:</span>
+                {selectedTags.map((tag) => (
+                  <span key={tag} className="selected-tag">
+                    {tag}
+                    <span className="remove-tag" onClick={() => handleTagClick(tag)}>×</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          
           <div className="form-actions">
             <button type="button" onClick={() => navigate(-1)}>취소</button>
             <button type="submit">수정 완료</button>

@@ -62,6 +62,8 @@ class PostServiceTest {
         UpdateDto updateDto = new UpdateDto();
         updateDto.setTitle("Test Title");
         updateDto.setContent("Test Content");
+        updateDto.setTags(List.of());
+
 
         Member mockMember = new Member("1", "test@test.com", "pw123", "nickname123", "None");
         mockMember.setId(123L);
@@ -228,12 +230,15 @@ class PostServiceTest {
         UpdateDto updateDto = new UpdateDto();
         updateDto.setTitle("수정된 제목");
         updateDto.setContent("수정된 본문");
+        updateDto.setTags(List.of());
+
 
         Post post = new Post();
         post.setId(postId);
         post.setTitle("이전 제목");
         post.setContent("이전 본문");
         post.setUpdatedAt(LocalDateTime.now());
+
 
         // findById(id) → post
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));

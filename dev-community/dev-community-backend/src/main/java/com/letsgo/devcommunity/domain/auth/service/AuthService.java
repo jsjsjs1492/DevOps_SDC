@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.letsgo.devcommunity.global.common.FileStorageService.DEFAULT_PROFILE_IMAGE_URL;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -23,6 +25,7 @@ public class AuthService {
         validateEmailVerification(request.email());
         validateDuplicateLoginId(request.loginId());
         validateDuplicateEmail(request.email());
+        validatePassword(request.password());
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
@@ -31,7 +34,7 @@ public class AuthService {
                 request.email(),
                 encodedPassword,
                 request.nickname(),
-                null
+                DEFAULT_PROFILE_IMAGE_URL
         );
 
         authRepository.save(member);
@@ -47,6 +50,32 @@ public class AuthService {
         }
 
         return member;
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.length() < 8 || password.length() > 20) {
+            throw new IllegalArgumentException("비밀번호는 8자 이상 20자 이하로 입력해주세요.");
+        }
+        boolean hasUpperCase = false;
+        boolean hasLowerCase = false;
+        boolean hasDigit = false;
+        boolean hasSpecialChar = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                hasUpperCase = true;
+            } else if (Character.isLowerCase(c)) {
+                hasLowerCase = true;
+            } else if (Character.isDigit(c)) {
+                hasDigit = true;
+            } else if (!Character.isLetterOrDigit(c)) {
+                hasSpecialChar = true;
+            }
+        }
+
+        if (!hasUpperCase || !hasLowerCase || !hasDigit || !hasSpecialChar) {
+            throw new IllegalArgumentException("비밀번호는 영문 대/소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+        }
     }
 
     private void validateEmailVerification(String email) {

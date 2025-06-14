@@ -1,0 +1,101 @@
+/* 태그 관련 스타일 */
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.post-tag {
+  padding: 0.3rem 0.6rem;
+  background-color: #eef2f7;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-tag:hover {
+  background-color: #4AD395;
+  color: white;
+}
+
+/* 태그 선택 UI 스타일 */
+.tags-container {
+  margin-bottom: 1rem;
+}
+
+.tags-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag-item {
+  padding: 0.4rem 0.8rem;
+  background-color: #eef2f7;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.tag-item:hover {
+  background-color: #e2e8f0;
+}
+
+.tag-item.selected {
+  background-color: #4AD395;
+  color: white;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.selected-tag {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  background-color: #4AD395;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.selected-tag .remove-tag {
+  margin-left: 0.3rem;
+  cursor: pointer;
+}
+
+/* 태그 검색 스타일 */
+.tag-search-container {
+  margin-bottom: 1rem;
+}
+
+.tag-search-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.tag-search-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

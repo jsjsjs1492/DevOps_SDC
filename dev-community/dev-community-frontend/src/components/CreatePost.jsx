@@ -1,14 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { Editor } from '@toast-ui/react-editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CreatePostStyles.css';
+import './TagStyles.css'; // 태그 스타일 추가
+import tags from '../data/tags'; // 태그 목록 import
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]); // 선택된 태그 배열
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const editorRef = useRef(null);
+
+  // 태그 선택 처리
+  const handleTagClick = (tag) => {
+    if (selectedTags.includes(tag)) {
+      // 이미 선택된 태그면 제거
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      // 최대 5개까지만 선택 가능
+      if (selectedTags.length < 5) {
+        setSelectedTags([...selectedTags, tag]);
+      } else {
+        alert('태그는 최대 5개까지 선택 가능합니다.');
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,14 +39,20 @@ const CreatePost = () => {
       return;
     }
 
+    if (selectedTags.length === 0) {
+      alert('태그를 최소 1개 이상 선택해주세요.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       
-      // 게시글 작성 API 호출
+      // 게시글 작성 API 호출 (tags 포함)
       const response = await axios.post('/post', {
         title,
-        content
+        content,
+        tags: selectedTags
       });
       
       // 작성 성공 시 해당 게시글 상세 페이지로 이동
@@ -83,14 +110,47 @@ const CreatePost = () => {
           
           <div className="form-group">
             <label htmlFor="content">내용</label>
-            <textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="내용을 입력하세요"
-              rows="10"
-              required
+            <Editor
+              ref={editorRef}
+              initialValue={content}
+              previewStyle="vertical"
+              height="300px"
+              initialEditType="wysiwyg"
+              hideModeSwitch
+              useCommandShortcut
+              onChange={() => {
+                const md = editorRef.current.getInstance().getMarkdown();
+                setContent(md);
+              }}
             />
+          </div>
+          
+          {/* 태그 선택 UI */}
+          <div className="form-group">
+            <label className="tags-title">태그 선택 (최대 5개)</label>
+            <div className="tags-list">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className={`tag-item ${selectedTags.includes(tag) ? 'selected' : ''}`}
+                  onClick={() => handleTagClick(tag)}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            
+            {selectedTags.length > 0 && (
+              <div className="selected-tags">
+                <span>선택된 태그:</span>
+                {selectedTags.map((tag) => (
+                  <span key={tag} className="selected-tag">
+                    {tag}
+                    <span className="remove-tag" onClick={() => handleTagClick(tag)}>×</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="form-actions">

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './MainPageStyles.css';
+import './TagStyles.css'; // 태그 스타일 추가
+import tags from '../data/tags'; // 태그 목록 import
 
 // 더미 데이터 정의
 /*const dummyPosts = [
@@ -197,6 +199,24 @@ const MainPage = () => {
                           <span className="post-author">{post.author.nickname}</span>
                           <span className="post-date">{new Date(post.createdAt).toLocaleDateString()}</span>
                         </div>
+                        {/* 태그 표시 */}
+                        {post.tags && post.tags.length > 0 && (
+                          <div className="post-tags">
+                            {post.tags.slice(0, 3).map((tag) => (
+                              <span 
+                                key={tag} 
+                                className="post-tag"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // 이벤트 버블링 방지
+                                  navigate(`/all-posts?tag=${tag}`);
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {post.tags.length > 3 && <span className="post-tag">+{post.tags.length - 3}</span>}
+                          </div>
+                        )}
                       </div>
                       <div className="post-likes">
                         <i className="bx bx-like"></i>
@@ -212,6 +232,7 @@ const MainPage = () => {
               </div>
             </section>
 
+            
             <section className="posts-section all-posts">
               <div className="section-header">
                 <h2>전체 게시글</h2>
@@ -237,6 +258,24 @@ const MainPage = () => {
                           <span className="post-author">{post.author.nickname}</span>
                           <span className="post-date">{new Date(post.createdAt).toLocaleDateString()}</span>
                         </div>
+                        {/* 태그 표시 추가 */}
+                        {post.tags && post.tags.length > 0 && (
+                          <div className="post-tags">
+                            {post.tags.slice(0, 3).map((tag) => (
+                              <span 
+                                key={tag} 
+                                className="post-tag"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // 이벤트 버블링 방지
+                                  navigate(`/all-posts?tag=${tag}`);
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {post.tags.length > 3 && <span className="post-tag">+{post.tags.length - 3}</span>}
+                          </div>
+                        )}
                       </div>
                       <div className="post-likes">
                         <i className="bx bx-like"></i>
@@ -251,6 +290,22 @@ const MainPage = () => {
                 )}
               </div>
             </section>
+            
+            
+            <div className="sidebar-section">
+              <h3>태그</h3>
+              <div className="tag-cloud">
+                {tags.map((tag) => (
+                  <span 
+                    key={tag} 
+                    className="tag"
+                    onClick={() => navigate(`/all-posts?tag=${tag}`)}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -266,27 +321,19 @@ const MainPage = () => {
             </button>
           </div>
 
+          
           <div className="sidebar-section">
-            <h3>카테고리</h3>
-            <ul>
-              <li><i className="bx bx-code-alt"></i> 프론트엔드</li>
-              <li><i className="bx bx-server"></i> 백엔드</li>
-              <li><i className="bx bx-mobile"></i> 모바일</li>
-              <li><i className="bx bx-cog"></i> 데브옵스</li>
-              <li><i className="bx bx-brain"></i> 인공지능</li>
-              <li><i className="bx bx-link-alt"></i> 블록체인</li>
-            </ul>
-          </div>
-
-          <div className="sidebar-section">
-            <h3>인기 태그</h3>
+            <h3>태그</h3>
             <div className="tag-cloud">
-              <span className="tag">JavaScript</span>
-              <span className="tag">React</span>
-              <span className="tag">Python</span>
-              <span className="tag">Node.js</span>
-              <span className="tag">TypeScript</span>
-              <span className="tag">Docker</span>
+              {tags.map((tag) => (
+                <span 
+                  key={tag} 
+                  className="tag"
+                  onClick={() => navigate(`/all-posts?tag=${tag}`)}
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
         </aside>

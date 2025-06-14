@@ -271,3 +271,7 @@ gradle-app.setting
 
 application.properties
 .vscode
+*.properties
+.gitignore
+
+Jenkinsfile

@@ -18,8 +18,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1234
       MAIL_HOST: mail.sogang.ac.kr
       MAIL_PORT: 465
-      MAIL_USERNAME: jesjsjes@sogang.ac.kr
-      MAIL_PASSWORD: wndrnrwlq1492@
+      MAIL_USERNAME: 
+      MAIL_PASSWORD: 
     ports:
       - "8081:8081"
     depends_on:

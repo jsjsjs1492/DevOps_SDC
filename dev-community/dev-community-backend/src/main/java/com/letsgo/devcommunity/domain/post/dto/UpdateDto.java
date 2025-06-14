@@ -1,5 +1,6 @@
 package com.letsgo.devcommunity.domain.post.dto;
 
+import com.letsgo.devcommunity.domain.post.entity.Tag;
 import lombok.Getter;
 import lombok.Setter;
 
