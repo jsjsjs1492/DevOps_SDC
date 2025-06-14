@@ -27,6 +27,8 @@ services:
       - MAIL_PORT
       - MAIL_USERNAME
       - MAIL_PASSWORD
+      - ACEESS_KEY
+      - SECRET_KEY
     volumes:
       - ./backend-logs:/app/logs
     depends_on:
