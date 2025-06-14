@@ -1,39 +1,41 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CreatePostStyles.css';
-import './TagStyles.css'; // 태그 스타일 추가
-import tags from '../data/tags'; // 태그 목록 import
+import './TagStyles.css';
+import tags from '../data/tags';
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]); // 선택된 태그 배열
+  const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const editorRef = useRef(null);
 
-  // 태그 선택 처리
+  useEffect(() => {
+    const instance = editorRef.current?.getInstance();
+    if (instance) {
+      setContent(instance.getMarkdown());
+    }
+  }, []);
+
   const handleTagClick = (tag) => {
     if (selectedTags.includes(tag)) {
-      // 이미 선택된 태그면 제거
       setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else if (selectedTags.length < 5) {
+      setSelectedTags([...selectedTags, tag]);
     } else {
-      // 최대 5개까지만 선택 가능
-      if (selectedTags.length < 5) {
-        setSelectedTags([...selectedTags, tag]);
-      } else {
-        alert('태그는 최대 5개까지 선택 가능합니다.');
-      }
+      alert('태그는 최대 5개까지 선택 가능합니다.');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!title.trim() || !content.trim()) {
       alert('제목과 내용을 모두 입력해주세요.');
       return;
@@ -47,19 +49,17 @@ const CreatePost = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // 게시글 작성 API 호출 (tags 포함)
+
       const response = await axios.post('/post', {
         title,
         content,
         tags: selectedTags
       });
-      
-      // 작성 성공 시 해당 게시글 상세 페이지로 이동
+
       navigate(`/post/${response.data.id}`);
     } catch (error) {
       console.error('게시글 작성 실패:', error);
-      
+
       if (error.response) {
         const { status } = error.response;
         if (status === 400) {
@@ -73,7 +73,7 @@ const CreatePost = () => {
       } else {
         setError('서버 연결에 실패했습니다.');
       }
-      
+
       setLoading(false);
     }
   };
@@ -92,9 +92,9 @@ const CreatePost = () => {
 
       <div className="create-post-container">
         <h1>새 게시글 작성</h1>
-        
+
         {error && <div className="error-message">{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="title">제목</label>
@@ -107,15 +107,14 @@ const CreatePost = () => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="content">내용</label>
             <Editor
               ref={editorRef}
-              initialValue={content}
               previewStyle="vertical"
               height="300px"
-              initialEditType=""
+              initialEditType="wysiwyg"
               hideModeSwitch
               useCommandShortcut
               onChange={() => {
@@ -124,8 +123,7 @@ const CreatePost = () => {
               }}
             />
           </div>
-          
-          {/* 태그 선택 UI */}
+
           <div className="form-group">
             <label className="tags-title">태그 선택 (최대 5개)</label>
             <div className="tags-list">
@@ -139,7 +137,6 @@ const CreatePost = () => {
                 </span>
               ))}
             </div>
-            
             {selectedTags.length > 0 && (
               <div className="selected-tags">
                 <span>선택된 태그:</span>
@@ -152,22 +149,9 @@ const CreatePost = () => {
               </div>
             )}
           </div>
-          
+
           <div className="form-actions">
-            <button 
-              type="button" 
-              className="cancel-btn"
-              onClick={() => navigate(-1)}
-            >
-              취소
-            </button>
-            <button 
-              type="submit" 
-              className="submit-btn"
-              disabled={loading}
-            >
-              {loading ? '작성 중...' : '작성 완료'}
-            </button>
+            <button type="submit" className="submit-button">작성하기</button>
           </div>
         </form>
       </div>
