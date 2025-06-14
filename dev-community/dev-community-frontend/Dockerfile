@@ -1,3 +1,4 @@
+# Dockerfile for React Frontend Application
 # ----------- 1단계: React 앱 빌드(Stage 1) -----------
 FROM node:20 as builder
 WORKDIR /app
