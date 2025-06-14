@@ -110,7 +110,7 @@ const MainPage = () => {
   // 로그아웃 처리 함수
   const handleLogout = async () => {
     try {
-      await axios.post('/auth/logout');
+      await axios.post('/auth/logout',{withCredentials: true });
       localStorage.removeItem('user');
       navigate('/');
     } catch (error) {
