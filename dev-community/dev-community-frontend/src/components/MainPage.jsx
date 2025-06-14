@@ -5,7 +5,7 @@ import './MainPageStyles.css';
 import './TagStyles.css'; // 태그 스타일 추가
 import tags from '../data/tags'; // 태그 목록 import
 
-axios.defaults.withCredentials = true;
+// axios.defaults.withCredentials = true;
 
 const MainPage = () => {
   const navigate = useNavigate();

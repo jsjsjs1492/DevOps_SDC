@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './EditProfileStyles.css';
-axios.defaults.withCredentials = true;
+// axios.defaults.withCredentials = true;
 
 const EditProfile = () => {
     const [userInfo, setUserInfo] = useState(null);

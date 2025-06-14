@@ -6,6 +6,7 @@ import axios from 'axios';
 
 // 환경 변수에서 API URL 설정
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+axios.defaults.withCredentials = true;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
