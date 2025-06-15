@@ -33,51 +33,34 @@ const MainPage = () => {
     fetchUser();
 
     const fetchPosts = async () => {
+      setLoading(true); // 로딩 시작은 여기서 한 번만
+
       try {
-        setLoading(true);
+        // 1. 인기 게시글 먼저 가져오기 (순차 처리)
+        const popularResponse = await axios.get('/post', {
+          params: {
+            page: 0,
+            size: 8,
+            sort: 'likeCount,desc'
+          }
+        });
+        setPopularPosts(popularResponse.data.content);
 
-        // 서버 요청 시도
-        try {
-          // 인기 게시글 가져오기
-          const popularResponse = await axios.get('/post', {
-            params: {
-              page: 0,
-              size: 8,
-              // sort: 'recommendCount,desc'
-              //  sort: 'likeCount,desc'
-            }
-          });
-          // 프론트에서 likeCount 기준으로 정렬
-          const sortedByLikeCount = popularResponse.data.content
-            .slice() // 원본 배열 복사
-            .sort((a, b) => b.likeCount - a.likeCount);
+        // 2. 인기 게시글 로드 완료 후, 전체 게시글 가져오기 (순차 처리)
+        const allPostsResponse = await axios.get('/post', {
+          params: {
+            page: 0,
+            size: 8,
+            sort: 'createdAt,desc'
+          }
+        });
+        setAllPosts(allPostsResponse.data.content);
 
-          // 상위 8개만 선택
-          setPopularPosts(sortedByLikeCount.slice(0, 8));
-
-          // 전체 게시글 가져오기
-          const allPostsResponse = await axios.get('/post', {
-            params: {
-              page: 0,
-              size: 8,
-              sort: 'createdAt,desc'
-            }
-          });
-          setAllPosts(allPostsResponse.data.content);
-        } catch (error) {
-          console.error('서버 연결 실패, 더미 데이터 사용:', error);
-          // 서버 연결 실패 시 더미 데이터 사용
-          /* setPopularPosts(dummyPosts.sort((a, b) => b.recommendCount - a.recommendCount));
-           setAllPosts(dummyPosts.sort((a, b) => 
-             new Date(b.createdAt) - new Date(a.createdAt)
-           ));*/
-        }
-
-        setLoading(false);
-      } catch (error) {
+      } catch (error) { // 모든 에러를 여기서 처리
         console.error('게시글 로딩 실패:', error);
-        setError('게시글을 불러오는데 실패했습니다.');
-        setLoading(false);
+        setError('게시글을 불러오는데 실패했습니다. 서버 연결을 확인해주세요.');
+      } finally {
+        setLoading(false); // 성공하든 실패하든 로딩 상태를 false로 변경
       }
     };
 
@@ -103,7 +86,7 @@ const MainPage = () => {
   };
 
   const handlePostClick = (id) => {
-    navigate(`/post/${id}`);  // 이 부분이 제대로 동작하는지 확인
+    navigate(`/post/${id}`);
   };
 
   return (
@@ -197,7 +180,7 @@ const MainPage = () => {
                       </div>
                       <div className="post-likes">
                         <i className="bx bx-like"></i>
-                        <span>{post.likeCount}</span>
+                        <span>{post.likeCount}</span> 
                       </div>
                     </div>
                   ))
