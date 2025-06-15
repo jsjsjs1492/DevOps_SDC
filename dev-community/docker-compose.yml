@@ -66,7 +66,7 @@ services:
   # --- 모니터링 스택 ---
 
   prometheus:
-    image: prom/prometheus:v2.53.0 # 최신 안정 버전 사용 권장
+    image: prom/prometheus:latest 
     container_name: prometheus
     ports:
       - "9090:9090" # Prometheus 웹 UI 포트 (EC2 외부 포트:컨테이너 내부 포트)
@@ -83,7 +83,7 @@ services:
     restart: always
 
   grafana:
-    image: grafana/grafana:11.1.0 # 최신 안정 버전 사용 권장
+    image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3000:3000" # Grafana 웹 UI 포트 (EC2 외부 포트:컨테이너 내부 포트)
@@ -98,7 +98,7 @@ services:
     restart: always
 
   node_exporter:
-    image: prom/node-exporter:v1.8.1 # 최신 안정 버전 사용 권장
+    image: prom/node-exporter:latest # 최신 안정 버전 사용 권장
     container_name: node_exporter
     # 호스트의 메트릭을 수집하기 위해 host 네트워크 모드 사용 (가장 쉬운 방법)
     # 이렇게 하면 컨테이너가 호스트의 네트워크 스택을 공유합니다.
@@ -116,7 +116,7 @@ services:
     restart: always
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.0 # 최신 안정 버전 사용 권장
+    image: gcr.io/cadvisor/cadvisor:latest # 최신 안정 버전 사용 권장
     container_name: cadvisor
     ports:
       - "8080:8080" # cAdvisor 웹 UI/API 포트
