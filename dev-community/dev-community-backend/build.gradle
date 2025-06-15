@@ -43,6 +43,9 @@ dependencies {
 
 	implementation 'software.amazon.awssdk:s3:2.20.52'
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // H2 Database (테스트 환경에서 인메모리 데이터베이스로 사용) - 이 줄이 필수입니다!
+    testImplementation 'com.h2database:h2'
 	
 }
 
