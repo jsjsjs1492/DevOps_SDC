@@ -119,7 +119,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest # 최신 안정 버전 사용 권장
     container_name: cadvisor
     ports:
-      - "8080:8080" # cAdvisor 웹 UI/API 포트
+      - "8088:8082" # cAdvisor 웹 UI/API 포트
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw # Docker 소켓 접근
