@@ -133,13 +133,13 @@ services:
   # --- 로그 수집 스택 ---
 
   loki:
-    image: grafana/loki:latest # Loki 최신 안정 버전 사용 권장 (예: 3.0.0)
+    image: grafana/loki:latest
     container_name: loki
     ports:
-      - "3100:3100" # Loki API 포트 (Promtail이 로그를 푸시하고 Grafana가 쿼리하는 포트)
+      - "3100:3100"
     volumes:
-      - loki-data:/loki # 로그 데이터 저장을 위한 영구 볼륨
-    command: -config.file=/etc/loki/config.yaml # Loki 설정 파일 (기본 설정 사용 시 생략 가능)
+      - loki-data:/loki
+    # command: -config.file=/etc/loki/config.yaml # <-- 이 줄을 제거하거나 주석 처리합니다!
     networks:
       - dev-community-network
     restart: always
