@@ -2,37 +2,33 @@
 version: '3.8'
 
 services:
-  # 데이터베이스 서비스 (기존 backend compose 파일에서 가져옴)
+  # 데이터베이스 서비스
   db:
-    image: mysql:8.0 # 실제 사용하는 MySQL 버전으로 변경 (8.0.42가 안정적이라면 8.0.42로)
+    image: mysql:8.0 # 실제 MySQL 버전에 맞게 유지
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234 # 실제 DB 비밀번호로 변경
+      MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: dev_community
-    # 외부에서 DB에 직접 접근할 필요가 없다면 ports는 제거하거나 주석 처리
-    # - "3306:3306"
     networks:
       - dev-community-network
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql # 데이터 유지를 위한 영구 볼륨
 
-  # Redis 서비스 (기존 backend compose 파일에서 가져옴)
+  # Redis 서비스
   redis:
-    image: redis:6.2
+    image: redis:6.2 # 실제 Redis 버전에 맞게 유지
     container_name: redis
-    # 외부에서 Redis에 직접 접근할 필요가 없다면 ports는 제거하거나 주석 처리
-    # - "6379:6379"
     networks:
       - dev-community-network
+    # ports: # Redis는 백엔드에서만 접근하므로 외부에 노출할 필요 없음
+    #   - "6379:6379"
 
-  # 백엔드 서비스 (기존 backend compose 파일에서 가져옴)
+  # 백엔드 서비스 (Spring Boot)
   backend:
     image: ${DOCKER_REGISTRY}/${BACKEND_IMAGE}:latest
-    container_name: backend # 명시적인 컨테이너 이름
-    # 백엔드는 이제 Nginx를 통해 접근되므로 외부 포트 노출 불필요.
-    # 개발 중 직접 백엔드 테스트 필요 시에만 주석 해제하여 사용
-    # ports:
-    #   - "${BACKEND_PORT}:${BACKEND_PORT}"
+    container_name: backend
+    ports:
+      - "${BACKEND_PORT}:8081" # EC2 외부 포트:컨테이너 내부 포트
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/dev_community?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: root
@@ -43,37 +39,134 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       ACCESS_KEY: ${ACCESS_KEY}
       SECRET_KEY: ${SECRET_KEY}
-      # application-prod.properties에 직접 설정했으므로 여기서 다시 설정할 필요는 없지만,
-      # 명시적으로 주입하려면 여기에 추가 (JENKINSFILE에서 export된 변수들이 들어옴)
- 
+    # 백엔드 로그를 Promtail이 수집할 수 있도록 컨테이너 내부 로그 경로를 호스트 볼륨에 마운트
+    # /app/logs는 Spring Boot 애플리케이션의 기본 로그 경로로 가정 (logback 설정에 따라 다름)
     volumes:
-      - ./backend-logs:/app/logs
+      - backend-logs:/app/logs # 백엔드 애플리케이션 로그를 위한 명명된 볼륨
     depends_on:
       - db
-      - redis # Redis도 의존성에 추가
+      - redis
     networks:
       - dev-community-network
 
-  # 프론트엔드 서비스 (기존 frontend compose 파일에서 가져옴)
-  # 이 서비스가 Nginx를 포함하며, 외부로 노출되는 포트를 담당합니다.
+  # 프론트엔드 서비스 (React + Nginx)
   frontend:
     image: ${DOCKER_REGISTRY}/${FRONTEND_IMAGE}:latest
     container_name: frontend
     ports:
-      # 외부에서 접근할 포트: 컨테이너 내부 Nginx 포트 (80)
-      - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_PORT:-80}:80" # 외부에서 접근할 포트: 컨테이너 내부 Nginx 포트 (80)
+    # Nginx 로그를 Promtail이 수집할 수 있도록 볼륨 마운트
     volumes:
-      - ./frontend-nginx-logs:/var/log/nginx # Nginx 로그 볼륨 마운트
+      - frontend-nginx-logs:/var/log/nginx # Nginx 로그를 위한 명명된 볼륨
     depends_on:
-      - backend # 프론트엔드가 백엔드 API에 의존하므로 추가
+      - backend # 프론트엔드가 백엔드 API에 의존
     networks:
       - dev-community-network
 
+  # --- 모니터링 스택 ---
+
+  prometheus:
+    image: prom/prometheus:v2.53.0 # 최신 안정 버전 사용 권장
+    container_name: prometheus
+    ports:
+      - "9090:9090" # Prometheus 웹 UI 포트 (EC2 외부 포트:컨테이너 내부 포트)
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro # Prometheus 설정 파일 마운트 (읽기 전용)
+      - prometheus-data:/prometheus # 메트릭 데이터 저장을 위한 영구 볼륨
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - dev-community-network
+    restart: always
+
+  grafana:
+    image: grafana/grafana:11.1.0 # 최신 안정 버전 사용 권장
+    container_name: grafana
+    ports:
+      - "3000:3000" # Grafana 웹 UI 포트 (EC2 외부 포트:컨테이너 내부 포트)
+    volumes:
+      - grafana-data:/var/lib/grafana # 대시보드, 데이터소스 설정 저장을 위한 영구 볼륨
+    environment:
+      # 초기 admin 계정 설정. 운영 환경에서는 이 비밀번호를 환경 변수로 주입하거나 Vault와 같은 Secret Manager 사용
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin_password # 강력한 비밀번호로 변경하세요!
+    networks:
+      - dev-community-network
+    restart: always
+
+  node_exporter:
+    image: prom/node-exporter:v1.8.1 # 최신 안정 버전 사용 권장
+    container_name: node_exporter
+    # 호스트의 메트릭을 수집하기 위해 host 네트워크 모드 사용 (가장 쉬운 방법)
+    # 이렇게 하면 컨테이너가 호스트의 네트워크 스택을 공유합니다.
+    network_mode: host
+    pid: host # 호스트의 프로세스 정보에 접근 허용
+    volumes:
+      - /proc:/host/proc:ro # 읽기 전용으로 /proc 마운트
+      - /sys:/host/sys:ro # 읽기 전용으로 /sys 마운트
+      - /:/rootfs:ro # 읽기 전용으로 루트 파일 시스템 마운트 (파일 시스템 메트릭 수집용)
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      # Docker가 설치된 파일 시스템만 모니터링하도록 제외 규칙 설정 (선택 사항)
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers)($|/)'
+    restart: always
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.0 # 최신 안정 버전 사용 권장
+    container_name: cadvisor
+    ports:
+      - "8080:8080" # cAdvisor 웹 UI/API 포트
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw # Docker 소켓 접근
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro # Docker 데이터 디렉토리 접근
+      - /dev/disk/:/dev/disk:ro # 디스크 I/O 메트릭 수집
+    networks:
+      - dev-community-network
+    restart: always
+
+  # --- 로그 수집 스택 ---
+
+  loki:
+    image: grafana/loki:latest # Loki 최신 안정 버전 사용 권장 (예: 3.0.0)
+    container_name: loki
+    ports:
+      - "3100:3100" # Loki API 포트 (Promtail이 로그를 푸시하고 Grafana가 쿼리하는 포트)
+    volumes:
+      - loki-data:/loki # 로그 데이터 저장을 위한 영구 볼륨
+    command: -config.file=/etc/loki/config.yaml # Loki 설정 파일 (기본 설정 사용 시 생략 가능)
+    networks:
+      - dev-community-network
+    restart: always
+
+  promtail:
+    image: grafana/promtail:latest # Promtail 최신 안정 버전 사용 권장 (예: 3.0.0)
+    container_name: promtail
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro # Promtail 설정 파일 마운트 (읽기 전용)
+      - /var/log:/var/log:ro # 호스트의 시스템 로그 접근 (예: auth.log, syslog)
+      # Docker 컨테이너의 실제 로그 파일 경로를 마운트
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    networks:
+      - dev-community-network
+    depends_on:
+      - loki # Promtail은 Loki가 실행 중이어야 로그를 보낼 수 있음
+    restart: always
+
 networks:
   dev-community-network:
-    driver: bridge
+    driver: bridge # 모든 서비스가 이 네트워크를 통해 통신
 
 volumes:
-  mysql-data:
-  # frontend-nginx-logs: # 명시적으로 볼륨 관리한다면 추가
-  # backend-logs: # 명시적으로 볼륨 관리한다면 추가
+  mysql-data: # MySQL 데이터 지속성
+  prometheus-data: # Prometheus 메트릭 데이터 지속성
+  grafana-data: # Grafana 대시보드 및 설정 지속성
+  loki-data: # Loki 로그 데이터 지속성
+  backend-logs: # 백엔드 애플리케이션 로그 지속성 (선택 사항, 로컬 디버깅용)
+  frontend-nginx-logs: # 프론트엔드 Nginx 로그 지속성 (선택 사항, 로컬 디버깅용)

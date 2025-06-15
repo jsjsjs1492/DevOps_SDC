@@ -242,3 +242,4 @@ yarn-error.log*
 
 # CMake build directories (if using CMake in a polyglot project)
 cmake-build-*/
+Jenkinsfile
