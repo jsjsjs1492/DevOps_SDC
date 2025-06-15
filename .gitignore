@@ -212,8 +212,8 @@ $RECYCLE.BIN/
 # ---------------------------------------------------
 
 # Environment specific property files
-application.properties
-*.properties # Generally, application.properties should be tracked. 
+# application.properties
+# *.properties # Generally, application.properties should be tracked. 
              # If this is for local dev configuration, consider using .env files.
              # If you want to ignore all .properties files, uncomment this.
 
