@@ -41,7 +41,7 @@ const MainPage = () => {
           params: {
             page: 0,
             size: 8,
-            sort: 'likeCount,desc'
+            sort: 'likeCounts,desc'
           }
         });
         setPopularPosts(popularResponse.data.content);
