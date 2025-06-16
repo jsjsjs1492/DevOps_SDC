@@ -46,6 +46,7 @@ dependencies {
 
 	// Spring Boot Actuator (모니터링 엔드포인트 제공) - 이 줄 추가
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

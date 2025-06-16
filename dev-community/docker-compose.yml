@@ -139,7 +139,6 @@ services:
       - "3100:3100"
     volumes:
       - loki-data:/loki
-    # command: -config.file=/etc/loki/config.yaml # <-- 이 줄을 제거하거나 주석 처리합니다!
     networks:
       - dev-community-network
     restart: always

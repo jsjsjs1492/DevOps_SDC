@@ -15,7 +15,7 @@ scrape_configs:
     # cAdvisor 컨테이너는 동일한 Docker 네트워크 안에 있으므로 서비스 이름과 컨테이너 내부 포트를 사용합니다.
     # 호스트 포트 변경과 무관하게 컨테이너 내부 포트 8080을 그대로 사용합니다.
     static_configs:
-      - targets: ['cadvisor:8080'] # <--- 이 부분은 변경 없습니다!
+      - targets: ['cadvisor:8082'] 
 
   - job_name: 'backend_app'
     static_configs:
