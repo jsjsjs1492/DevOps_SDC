@@ -93,6 +93,14 @@ services:
       # 초기 admin 계정 설정. 운영 환경에서는 이 비밀번호를 환경 변수로 주입하거나 Vault와 같은 Secret Manager 사용
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin_password # 강력한 비밀번호로 변경하세요!
+      GF_SMTP_ENABLED: true
+      GF_SMTP_HOST: smtp.gmail.com:587
+      GF_SMTP_USER: seong.jang0313@gmail.com
+      GF_SMTP_PASSWORD: xfvojxhsjaydxxls
+      GF_SMTP_FROM_ADDRESS: seong.jang0313@gmail.com
+      GF_SMTP_FROM_NAME: Grafana
+      GF_SMTP_SKIP_VERIFY: true            # 인증서 오류 방지 (옵션)
+      GF_SMTP_STARTTLS_POLICY: Opportunistic
     networks:
       - dev-community-network
     restart: always
