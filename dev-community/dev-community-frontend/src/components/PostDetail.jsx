@@ -1,5 +1,6 @@
 // src/components/PostDetail.jsx
 import React, { useState, useEffect } from 'react';
+import FollowButton from '../components/FollowButton';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './PostDetailStyles.css';
@@ -7,6 +8,7 @@ import './TagStyles.css'; // 태그 스타일 추가
 
 // Markdown 렌더링용 라이브러리 추가
 import ReactMarkdown from 'react-markdown';
+
 
 const PostDetail = () => {
   const { id: postId } = useParams(); // Rename to postId for clarity
@@ -287,9 +289,23 @@ const PostDetail = () => {
           <header>
             <h1>{post.title}</h1>
             <div className="post-meta">
-              <span className="post-author">{post.author.nickname}</span>
-              <span className="post-date">{new Date(post.createdAt).toLocaleDateString()}</span>
-              <span className="post-views">조회 {post.viewCount}</span>
+              {/* Add onClick to navigate to author's detail page */}
+              <span 
+                className="post-author clickable-author" 
+                onClick={() => navigate(`/user-detail/${post.author.loginId}`)}
+              >
+                {post.author.nickname}
+              </span>
+              {userInfo?.loginId !== post.author.loginId && (
+                <FollowButton
+                  authorLoginId={post.author.loginId}
+                  currentUserLoginId={userInfo.loginId}
+                />
+              )}
+            </div>
+            <div className="post-meta">
+            <span className="post-date">{new Date(post.createdAt).toLocaleDateString()}</span>
+            <span className="post-views">조회 {post.viewCount}</span>
             </div>
 
             {/* 태그 표시 추가 */}

@@ -42,6 +42,8 @@ public class MemberService {
         long receivedLikeCount = postLikeRepository.countLikesReceivedByMember(member.getId());
 
         return new MemberProfileResponse(
+                member.getId(), // id 추가
+                member.getLoginId(), // loginId 추가
                 member.getNickname(),
                 member.getProfileImageUrl(),
                 followerCount,

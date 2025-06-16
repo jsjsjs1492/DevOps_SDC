@@ -87,7 +87,8 @@ public class PostService {
                     Optional<Member> user = memberRepository.findById(post.getUserId());
                     String nickname = user.map(Member::getNickname)
                             .orElse(null);
-                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname);
+                    String loginId = user.map(Member::getLoginId).orElse(null);
+                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname, loginId);
                     // 태그 포함
                     List<TagPostMap> tagMaps = tagPostMapRepository.findAllByPostId(post.getId());
                     List<Long> tagIds = tagMaps.stream()
@@ -159,7 +160,7 @@ public class PostService {
 
         return new UpdateResponseDto(post.getId(), post.getUpdatedAt());
     }
-    
+
     // DELETE: 게시글 삭제하기
     public void deletePost(Long id) {
         postRepository.deleteById(id);
@@ -237,7 +238,7 @@ public class PostService {
         if(member.isEmpty()){
             throw new IllegalArgumentException("member not found");
         }
-        AuthorDTO authorDTO = new AuthorDTO(member.get().getId(), member.get().getNickname());
+        AuthorDTO authorDTO = new AuthorDTO(member.get().getId(), member.get().getNickname(), member.get().getLoginId());
         List<Comment> comments = commentRepository.findAllByPostId(postId);
         List<CommentDto> commentDtos = new ArrayList<>();
         comments.forEach(comment -> {
@@ -273,7 +274,8 @@ public class PostService {
                     Optional<Member> user = memberRepository.findById(post.getUserId());
                     String nickname = user.map(Member::getNickname)
                             .orElse(null);
-                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname);
+                    String loginId = user.map(Member::getLoginId).orElse(null);
+                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname, loginId);
                     // 태그 포함
                     List<TagPostMap> tagMaps = tagPostMapRepository.findAllByPostId(post.getId());
                     List<Long> tagIds = tagMaps.stream()
@@ -325,7 +327,8 @@ public class PostService {
                     Optional<Member> user = memberRepository.findById(post.getUserId());
                     String nickname = user.map(Member::getNickname)
                             .orElse(null);
-                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname);
+                    String loginId = user.map(Member::getLoginId).orElse(null);
+                    AuthorDTO authorDTO = new AuthorDTO(post.getUserId(), nickname, loginId);
                     // 태그 포함
                     List<TagPostMap> tagMaps = tagPostMapRepository.findAllByPostId(post.getId());
                     List<Long> tagIds = tagMaps.stream()

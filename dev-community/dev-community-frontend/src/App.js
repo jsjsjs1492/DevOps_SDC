@@ -7,9 +7,11 @@ import AllPosts from './components/AllPosts';
 import PostDetail from './components/PostDetail';
 import EditPost from './components/EditPost';
 import MyPage from './components/MyPage';
+import UserDetail from './components/UserDetail';
 import EditProfile from './components/EditProfile';
 import ChangePassword from './components/ChangePassword';
 import CreatePost from './components/CreatePost';
+
 
 
 function App() {
@@ -24,6 +26,7 @@ function App() {
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/edit-post/:id" element={<EditPost />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/user-detail/:loginId" element={<UserDetail />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/create-post" element={<CreatePost />} />

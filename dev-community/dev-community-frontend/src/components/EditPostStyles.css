@@ -1,135 +1,230 @@
-.edit-post {
+.edit-profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.edit-profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  position: relative;
+  border-bottom: 1px solid #dbdbdb;
+  padding-bottom: 15px;
+  margin-right: 105px;
+}
+
+.edit-profile-header h1 {
+  flex: 1;
+  text-align: center;
+  font-size: 24px;
+  margin: 0;
+  color: #262626;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px 10px;
+  color: #4AD395;
+}
+
+.profile-edit-section {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background-color: #f5f5f5;
+  align-items: center;
 }
 
-.edit-post-container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
+.profile-image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.profile-image-edit {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  margin-bottom: 15px;
+  border: 1px solid #dbdbdb;
+}
+
+.profile-image-edit img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-profile-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4AD395;
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.profile-image-edit:hover .image-overlay {
+  opacity: 1;
+}
+
+.profile-image-options {
+  position: absolute;
+  top: 200px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  overflow: hidden;
+  width: 220px;
+}
+
+.profile-image-options button {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: none;
+  text-align: center;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #dbdbdb;
+}
+
+.profile-image-options button:last-child {
+  border-bottom: none;
+}
+
+.profile-image-options button:hover {
+  background-color: #fafafa;
+}
+
+.profile-nickname {
+  font-size: 20px;
+  margin: 0;
+  color: #262626;
+}
+
+.edit-options {
+  width: 100%;
+  max-width: 500px;
+}
+
+.edit-section {
+  margin-bottom: 30px;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.edit-post-container h1 {
+.section-title {
+  font-size: 18px;
+  margin-top: 0;
   margin-bottom: 20px;
-  color: #333;
-  font-size: 24px;
+  color: #262626;
+  border-bottom: 1px solid #dbdbdb;
+  padding-bottom: 10px;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #8e8e8e;
 }
 
-.form-group input,
-.form-group textarea {
+.form-group input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid #dbdbdb;
   border-radius: 4px;
-  font-size: 16px;
-  font-family: inherit;
+  font-size: 14px;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+.error-message {
+  color: #ed4956;
+  font-size: 12px;
+  margin-top: 5px;
 }
 
-.form-actions {
+.loading, .error {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
 }
 
-.cancel-btn,
-.submit-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+.error {
+  color: #ed4956;
 }
 
-.cancel-btn {
-  background-color: #e74c3c;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background-color: #c0392b;
-}
-
-.submit-btn {
-  background-color: #3498db;
-  color: white;
-}
-
-.submit-btn:hover {
-  background-color: #2980b9;
-}
-
-.submit-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-}
-
-/* Loading and error styles */
-.loading-container,
-.error-container {
+.nickname-form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 50vh;
-  padding: 50px 0;
+  gap: 10px;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  border-top: 4px solid #3498db;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+.nickname-form input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.nickname-buttons {
+  display: flex;
+  gap: 10px;
 }
 
-.error-container p {
-  color: #e74c3c;
-  margin-bottom: 20px;
-  font-size: 16px;
-}
-
-.error-container button {
-  background-color: #3498db;
-  color: white;
+.nickname-buttons button {
+  padding: 6px 12px;
   border: none;
-  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 500;
+  font-size: 14px;
 }
 
-.error-container button:hover {
-  background-color: #2980b9;
+.nickname-buttons button[type="submit"] {
+  background-color: #4AD395;
+  color: white;
+}
+
+.nickname-buttons button[type="button"] {
+  background-color: #ddd;
+  color: #333;
 }

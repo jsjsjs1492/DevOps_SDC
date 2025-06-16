@@ -35,6 +35,9 @@ components:
           type: string
           format: uri
           example: "https://devcommunity-file.s3.ap-northeast-2.amazonaws.com/profiles/sample_profile.png"
+        loginId: 
+          type: string
+          example: "userLoginId123" 
 
     PostDetailResponse:
       type: object
@@ -401,6 +404,10 @@ paths:
               schema:
                 type: object
                 properties:
+                  id:
+                    type: integer
+                  loginId:
+                    type: string
                   nickname:
                     type: string
                   profileImageUrl:
