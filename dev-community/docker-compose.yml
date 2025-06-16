@@ -104,7 +104,7 @@ services:
     # 이렇게 하면 컨테이너가 호스트의 네트워크 스택을 공유합니다.
     ports:
       - "8001:9100"
-    pid: host # 호스트의 프로세스 정보에 접근 허용
+    # pid: host # 호스트의 프로세스 정보에 접근 허용
     volumes:
       - /proc:/host/proc:ro # 읽기 전용으로 /proc 마운트
       - /sys:/host/sys:ro # 읽기 전용으로 /sys 마운트
