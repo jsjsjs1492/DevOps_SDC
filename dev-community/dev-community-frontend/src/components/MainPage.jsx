@@ -110,7 +110,7 @@ const MainPage = () => {
 
       <div className="hero-section">
         <div className="hero-content">
-          <h2>개발자들을 위한 커뮤니티</h2>
+          <h2>서강대 개발자들을 위한 커뮤니티</h2>
           <p>지식을 공유하고 함께 성장하세요</p>
         </div>
         <div className="hero-image">

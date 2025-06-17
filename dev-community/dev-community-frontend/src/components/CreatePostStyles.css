@@ -68,12 +68,12 @@
   background-color: #e0e0e0;
 }
 
-.submit-btn {
+.submit-button {
   background-color: #4a6cf7;
   color: white;
 }
 
-.submit-btn:hover {
+.submit-button:hover {
   background-color: #3a5ce5;
 }
 
