@@ -365,7 +365,11 @@ const PostDetail = () => {
 
                   <li key={comment.id}>
                     <div className="comment-header">
-                      <p className="comment-author">{comment.author}</p>
+                      <p className="comment-author">
+                        {typeof comment.author === 'string' 
+                          ? comment.author 
+                          : comment.author?.nickname || '알 수 없음'}
+                      </p>
                       <div className="comment-actions">
                         {/* 답글 버튼 제거됨 */}
                         {/*
