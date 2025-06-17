@@ -8,14 +8,14 @@
 }
 
 .follow-btn.follow {
-  background-color: #4AD395;
+  background-color: #f0f2f5;
   color: #fff;
 }
 .follow-btn.hovered.follow {
-  background-color: #65bf97;
+  background-color: #3897f0;
 }
 .follow-btn.unfollow {
-  background-color: #4AD395;
+  background-color: #3897f0;
   color: #fff;
 }
 .follow-btn.hovered.unfollow {
