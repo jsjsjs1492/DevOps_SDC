@@ -365,7 +365,7 @@ const PostDetail = () => {
 
                   <li key={comment.id}>
                     <div className="comment-header">
-                      <p className="comment-author">{comment.author.nickname}</p>
+                      <p className="comment-author">{comment.author}</p>
                       <div className="comment-actions">
                         {/* 답글 버튼 제거됨 */}
                         {/*
