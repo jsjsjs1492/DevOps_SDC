@@ -5,19 +5,26 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  /* 기본 텍스트 색상 */
+  color: #fff;
 }
 
+/* "팔로우" 버튼 (아직 팔로우하지 않은 상태) */
 .follow-btn.follow {
-  background-color: #f0f2f5;
-  color: #fff;
+  background-color: #3897f0; /* 파란색 */
 }
+
+/* "팔로우" 버튼에 마우스 올렸을 때 (원한다면 미세한 변화를 줄 수 있습니다) */
 .follow-btn.hovered.follow {
-  background-color: #3897f0;
+  background-color: #2a7cdb; /* 원래 파란색보다 약간 더 어둡게 */
 }
+
+/* "팔로잉" 버튼 (이미 팔로우한 상태) - 처음에는 파란색 */
 .follow-btn.unfollow {
-  background-color: #3897f0;
-  color: #fff;
+  background-color: #3897f0; /* 파란색 */
 }
+
+/* "팔로잉" 버튼에 마우스 올렸을 때 - 빨간색으로 변경 */
 .follow-btn.hovered.unfollow {
-  background-color: #d34a4a;
+  background-color: #d34a4a; /* 빨간색 */
 }
