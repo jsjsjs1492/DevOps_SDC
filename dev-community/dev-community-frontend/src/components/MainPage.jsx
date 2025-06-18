@@ -14,20 +14,27 @@ const MainPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [nickname, setNickname] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('https://cdn-icons-png.flaticon.com/512/3135/3135715.png'); // 기본 이미지 설정
 
   // 데이터 가져오기
   useEffect(() => {
     const fetchUser = async () => {
       // 로컬스토리지에서 loginId 가져오기
       const userStr = localStorage.getItem('user');
-      if (!userStr) return;
+      if (!userStr) {
+        setNickname('사용자'); // 로그인 정보가 없으면 기본값 설정
+        return;
+      }
       const user = JSON.parse(userStr);
       try {
         // loginId 기반으로 사용자 정보 조회
         const response = await axios.get(`/member/${user.loginId}`);
         setNickname(response.data.nickname);
+        setProfileImageUrl(response.data.profileImageUrl || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'); // API 응답에 profileImageUrl이 없으면 기본 이미지 사용
       } catch (e) {
         console.error('유저 정보 로딩 실패', e);
+        setNickname('사용자');
+        setProfileImageUrl('https://cdn-icons-png.flaticon.com/512/3135/3135715.png');
       }
     };
     fetchUser();
@@ -250,30 +257,14 @@ const MainPage = () => {
                 )}
               </div>
             </section>
-            
-            {/* 이 아래에 있던 중복 태그 섹션을 제거했습니다. */}
-            {/* <div className="sidebar-section">
-              <h3>태그</h3>
-              <div className="tag-cloud">
-                {tags.map((tag) => (
-                  <span 
-                    key={tag} 
-                    className="tag"
-                    onClick={() => navigate(`/all-posts?tag=${tag}`)}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            */}
           </div>
         )}
 
         <aside className="community-sidebar">
           <div className="sidebar-section user-profile">
             <div className="profile-header">
-              <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Profile" className="profile-img" />
+              {/* 프로필 이미지 URL을 API에서 가져온 값으로 변경 */}
+              <img src={profileImageUrl} alt="Profile" className="profile-img" />
               <h3>환영합니다!</h3>
             </div>
             <p className="profile-info">{nickname ? `${nickname}님` : '사용자님'}</p>
